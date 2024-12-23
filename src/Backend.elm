@@ -40,8 +40,7 @@ init =
     ( { logs = []
       , rates = []
       , symbols =
-            [ 
-        "USDTZARPERP"
+            [ "USDTZARPERP"
             , "XRPUSDTPERP"
             , "DOGEUSDTPERP"
             , "SOLUSDTPERP"
@@ -60,13 +59,39 @@ init =
             , "BTCZARPERP"
             , "BTCUSDTPERP"
             , "BTCUSDCPERP"
-            ,"ETHUSDTPERP"
+            , "ETHUSDTPERP"
             , "ETHZARPERP"
             , "ETHUSDCPERP"
             ]
       }
     , Cmd.none
     )
+
+
+hardCodedSymbols =
+    [ "USDTZARPERP"
+    , "XRPUSDTPERP"
+    , "DOGEUSDTPERP"
+    , "SOLUSDTPERP"
+    , "AVAXUSDTPERP"
+    , "APTUSDTPERP"
+    , "OPUSDTPERP"
+    , "SUIUSDTPERP"
+    , "WIFUSDTPERP"
+    , "STXUSDTPERP"
+    , "1MPEPEUSDTPERP"
+    , "1MSHIBUSDTPERP"
+    , "TONUSDTPERP"
+    , "1MBONKUSDTPERP"
+    , "AVAILUSDTPERP"
+    , "ORDERUSDTPERP"
+    , "BTCZARPERP"
+    , "BTCUSDTPERP"
+    , "BTCUSDCPERP"
+    , "ETHUSDTPERP"
+    , "ETHZARPERP"
+    , "ETHUSDCPERP"
+    ]
 
 
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
@@ -101,6 +126,7 @@ update msg model =
                         _ ->
                             getFundingRates newModel remainingSymbols now |> Task.attempt (BE_GotFundingRates now)
                     )
+                        |> log ("Got funding rates for " ++ (rates |> List.head |> Maybe.map .currencyPair |> Maybe.withDefault "no rates"))
 
                 Err wrong ->
                     ( model, Cmd.none )
