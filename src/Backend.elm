@@ -135,6 +135,19 @@ update msg model =
         BE_FetchFundingRates now ->
             ( model, getFundingRates model hardCodedSymbols now |> Task.attempt (BE_GotFundingRates now) )
 
+        BE_FetchSymbolRates connectionId symbol ->
+            let
+                rates =
+                    model.rates
+                        |> List.filter (\r -> r.currencyPair == symbol)
+
+                _ =
+                    Debug.log "Rates" symbol
+            in
+            ( model
+            , Lamdera.sendToFrontend connectionId (FE_GotFundingRates rates)
+            )
+
 
 updateFromFrontend : BrowserCookie -> ConnectionId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend browserCookie connectionId msg model =
@@ -166,12 +179,9 @@ updateFromFrontend browserCookie connectionId msg model =
                 rates =
                     model.rates
                         |> List.filter (\r -> r.currencyPair == symbol)
-
-                result =
-                    compoundRates (180 * 24) rates
             in
             ( model
-            , Lamdera.sendToFrontend connectionId (FE_GotFundingRates result)
+            , Lamdera.sendToFrontend connectionId (FE_GotFundingRates rates)
             )
 
         Admin_TriggerFundingRatesFetch ->
@@ -179,6 +189,18 @@ updateFromFrontend browserCookie connectionId msg model =
             , Task.perform BE_FetchFundingRates Time.now
             )
                 |> log "Admin triggered funding rates fetch"
+
+        FetchAllFundingRates ->
+            ( model
+            , hardCodedSymbols
+                |> List.indexedMap
+                    (\i symbol ->
+                        Process.sleep (toFloat (i * 10))
+                            |> Task.andThen (\_ -> Task.succeed (BE_FetchSymbolRates connectionId symbol))
+                            |> Task.perform identity
+                    )
+                |> Cmd.batch
+            )
 
 
 log =

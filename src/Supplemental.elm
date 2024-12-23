@@ -285,7 +285,7 @@ formatPrice currency price =
 
 formatPercent : Float -> String
 formatPercent percent =
-    case formatFloat 1 percent of
+    case formatFloat 2 percent of
         Float formattedPercent ->
             (if percent > 0 then
                 "+" ++ formattedPercent

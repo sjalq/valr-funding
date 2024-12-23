@@ -5,6 +5,7 @@ import Html.Attributes as Attr
 import Pages.Admin
 import Pages.Default
 import Pages.Funding
+import Pages.Heatmap
 import Route exposing (..)
 import Types exposing (..)
 
@@ -15,6 +16,7 @@ viewTabs model =
         [ viewTab "Default" Default model.currentRoute
         , viewTab "Admin" (Admin AdminDefault) model.currentRoute
         , viewTab "Funding" (Funding "BTCZARPERP") model.currentRoute
+        , viewTab "Heatmap" Heatmap model.currentRoute
         ]
 
 
@@ -45,6 +47,9 @@ viewCurrentPage model =
 
         Funding symbol ->
             Pages.Funding.view model
+
+        Heatmap ->
+            Pages.Heatmap.view model
 
 
 viewNotFoundPage : Html FrontendMsg

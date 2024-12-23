@@ -12,6 +12,7 @@ parser =
         , Parser.map (Admin AdminDefault) (s "admin")
         , Parser.map (Admin AdminLogs) (s "admin" </> s "logs")
         , Parser.map Funding (s "funding" </> Parser.string)
+        , Parser.map Heatmap (s "heatmap")
         ]
 
 
@@ -38,3 +39,6 @@ toString route =
 
         Funding symbol ->
             "/funding/" ++ symbol
+
+        Heatmap ->
+            "/heatmap"
