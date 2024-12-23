@@ -120,7 +120,7 @@ update msg model =
                         [] ->
                             -- if there are no more remaining symbols, wait one hour and start fresh.
                             Process.sleep (1 * hour)
-                                |> Task.andThen (\_ -> getFundingRates newModel model.symbols now)
+                                |> Task.andThen (\_ -> getFundingRates newModel hardCodedSymbols now)
                                 |> Task.attempt (BE_GotFundingRates now)
 
                         _ ->
@@ -133,7 +133,7 @@ update msg model =
                         |> log ("Error fetching funding rates: " ++ (wrong |> Supplemental.httpErrorToString))
 
         BE_FetchFundingRates now ->
-            ( model, getFundingRates model model.symbols now |> Task.attempt (BE_GotFundingRates now) )
+            ( model, getFundingRates model hardCodedSymbols now |> Task.attempt (BE_GotFundingRates now) )
 
 
 updateFromFrontend : BrowserCookie -> ConnectionId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
