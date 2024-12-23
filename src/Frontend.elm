@@ -6,6 +6,7 @@ import Html exposing (..)
 import Lamdera
 import Pages.Admin
 import Pages.Default
+import Pages.Funding
 import Pages.PageFrame exposing (viewCurrentPage, viewTabs)
 import Route exposing (..)
 import Supplemental exposing (..)
@@ -49,6 +50,8 @@ init url key =
                 , isAuthenticated = False
                 , password = ""
                 }
+            , fundingRates = []
+            , symbol = ""
             }
     in
     inits model route
@@ -62,6 +65,9 @@ inits model route =
 
         Default ->
             Pages.Default.init model
+
+        Funding symbol ->
+            Pages.Funding.init { model | symbol = symbol }
 
         _ ->
             ( model, Cmd.none )
@@ -138,6 +144,9 @@ updateFromBackend msg model =
                     model.adminPage
             in
             ( { model | adminPage = { oldAdminPage | isAuthenticated = isAuthenticated } }, Cmd.none )
+
+        FE_GotFundingRates fundingRates ->
+            ( { model | fundingRates = fundingRates }, Cmd.none )
 
 
 view : Model -> Browser.Document FrontendMsg

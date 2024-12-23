@@ -2,7 +2,9 @@ module Types exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
+import Http
 import Lamdera exposing (ClientId, SessionId)
+import Lamdera.Debug exposing (Posix)
 import Url exposing (Url)
 
 
@@ -26,6 +28,7 @@ type Route
     = Default
     | Admin AdminRoute
     | NotFound
+    | Funding String
 
 
 type AdminRoute
@@ -40,15 +43,27 @@ type alias AdminPageModel =
     }
 
 
+type alias FundingRate =
+    { currencyPair : String
+    , fundingRate : String
+    , fundingTime : String
+    }
+
+
 type alias FrontendModel =
     { key : Key
     , currentRoute : Route
     , adminPage : AdminPageModel
+    , fundingRates : List ( FundingRate, Float )
+    , symbol : String
     }
 
 
 type alias BackendModel =
-    { logs : List String }
+    { logs : List String
+    , rates : List FundingRate
+    , symbols : List String
+    }
 
 
 type FrontendMsg
@@ -63,14 +78,22 @@ type FrontendMsg
 
 type ToBackend
     = NoOpToBackend
+      --- Admin ---
     | Admin_FetchLogs
     | Admin_ClearLogs
     | Admin_CheckPasswordBackend String
+    | Admin_TriggerFundingRatesFetch
+      ---
+    | FetchFundingRates String
 
 
 type BackendMsg
     = NoOpBackendMsg
+    | DirectToFrontend ConnectionId ToFrontend
     | Log String
+      ----------
+    | BE_GotFundingRates Posix (Result Http.Error ( List String, List FundingRate ))
+    | BE_FetchFundingRates Posix
 
 
 type ToFrontend
@@ -78,3 +101,4 @@ type ToFrontend
       -- Admin page
     | Admin_Logs_ToFrontend (List String)
     | Admin_LoginResponse Bool
+    | FE_GotFundingRates (List ( FundingRate, Float ))

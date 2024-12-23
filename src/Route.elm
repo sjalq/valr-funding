@@ -11,6 +11,7 @@ parser =
         [ Parser.map Default Parser.top
         , Parser.map (Admin AdminDefault) (s "admin")
         , Parser.map (Admin AdminLogs) (s "admin" </> s "logs")
+        , Parser.map Funding (s "funding" </> Parser.string)
         ]
 
 
@@ -34,3 +35,6 @@ toString route =
 
         NotFound ->
             "/not-found"
+
+        Funding symbol ->
+            "/funding/" ++ symbol

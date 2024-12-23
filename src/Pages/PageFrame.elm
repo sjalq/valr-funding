@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes as Attr
 import Pages.Admin
 import Pages.Default
+import Pages.Funding
 import Route exposing (..)
 import Types exposing (..)
 
@@ -13,6 +14,7 @@ viewTabs model =
     div [ Attr.class "flex justify-center mb-5" ]
         [ viewTab "Default" Default model.currentRoute
         , viewTab "Admin" (Admin AdminDefault) model.currentRoute
+        , viewTab "Funding" (Funding "BTCZARPERP") model.currentRoute
         ]
 
 
@@ -40,6 +42,9 @@ viewCurrentPage model =
 
         NotFound ->
             viewNotFoundPage
+
+        Funding symbol ->
+            Pages.Funding.view model
 
 
 viewNotFoundPage : Html FrontendMsg

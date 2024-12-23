@@ -94,7 +94,15 @@ viewTabContent model =
 viewDefaultTab : FrontendModel -> Html FrontendMsg
 viewDefaultTab model =
     div []
-        [ text "Default admin content" ]
+        [ text "Default admin content"
+        , div [ Attr.class "mt-4" ]
+            [ button
+                [ onClick (DirectToBackend Admin_TriggerFundingRatesFetch)
+                , Attr.class "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                ]
+                [ text "Trigger Funding Rates Fetch" ]
+            ]
+        ]
 
 
 viewLogsTab : FrontendModel -> Html FrontendMsg
