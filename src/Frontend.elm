@@ -174,6 +174,9 @@ updateFromBackend msg model =
         FE_GotFundingRates rates ->
             ( { model | allFundingRates = model.allFundingRates ++ rates }, Cmd.none )
 
+        FE_GotCompoundedRates rates ->
+            ( { model | fundingRates = rates }, Cmd.none )
+
 
 view : Model -> Browser.Document FrontendMsg
 view model =

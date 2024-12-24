@@ -179,9 +179,10 @@ updateFromFrontend browserCookie connectionId msg model =
                 rates =
                     model.rates
                         |> List.filter (\r -> r.currencyPair == symbol)
+                        |> compoundRates (180 * 24)
             in
             ( model
-            , Lamdera.sendToFrontend connectionId (FE_GotFundingRates rates)
+            , Lamdera.sendToFrontend connectionId (FE_GotCompoundedRates rates)
             )
 
         Admin_TriggerFundingRatesFetch ->

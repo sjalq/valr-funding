@@ -24,9 +24,9 @@ viewHeatmap viewport rates =
     let
         symbols =
             Dict.keys rates
-                |> List.repeat 5
-                |> List.concat
 
+        -- |> List.repeat 5
+        -- |> List.concat
         maxRates =
             Dict.values rates
                 |> List.map List.length
@@ -61,7 +61,7 @@ viewHeatmap viewport rates =
                         g [ transform ("translate(0," ++ String.fromFloat (toFloat index * rowHeight) ++ ")") ]
                             [ text_ [ x "10", y "15", alignmentBaseline "middle" ] [ text symbol ]
                             , g [ transform "translate(150, 0)" ]
-                                [ heatRow blockWidth (Dict.get symbol rates |> Maybe.withDefault [] |> List.reverse) ]
+                                [ heatRow blockWidth (Dict.get symbol rates |> Maybe.withDefault []) ]
                             ]
                     )
                     symbols

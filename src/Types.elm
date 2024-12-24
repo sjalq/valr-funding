@@ -110,3 +110,4 @@ type ToFrontend
     | Admin_Logs_ToFrontend (List String)
     | Admin_LoginResponse Bool
     | FE_GotFundingRates (List FundingRate)
+    | FE_GotCompoundedRates (List ( FundingRate, Float ))
