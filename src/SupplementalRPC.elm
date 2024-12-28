@@ -118,47 +118,49 @@ encodeRPCCallAndResult args result =
         )
 
 
-makeModelImportUrl : String -> String
+makeModelImportUrl : String -> Maybe String
 makeModelImportUrl remoteLamderaUrl =
     Url.fromString remoteLamderaUrl
-        |> Maybe.map
-            (\url -> { url | path = "/_r/getModel/" })
-        |> Maybe.map Url.toString
-        |> Maybe.withDefault "Remote Url Encoding Failed"
+        |> Maybe.map (\url -> { url | path = "/_r/getModel/" } |> Url.toString)
 
 
 fetchImportedModel : String -> String -> Wire3.Decoder value -> Task.Task Http.Error value
 fetchImportedModel remoteLamderaUrl modelKey decoder =
-    Http.task
-        { method = "POST"
-        , headers =
-            [ Http.header "Content-Type" "application/octet-stream"
-            , Http.header "x-lamdera-model-key" modelKey
-            ]
-        , url = makeModelImportUrl remoteLamderaUrl |> addProxy
-        , body = Http.emptyBody
-        , resolver =
-            Http.bytesResolver <|
-                \response ->
-                    case response of
-                        Http.GoodStatus_ _ body ->
-                            case Wire3.bytesDecode decoder body of
-                                Just model ->
-                                    Ok model
+    case makeModelImportUrl remoteLamderaUrl of
+        Just url ->
+            Http.task
+                { method = "POST"
+                , headers =
+                    [ Http.header "Content-Type" "application/octet-stream"
+                    , Http.header "x-lamdera-model-key" modelKey
+                    ]
+                , url = url |> addProxy
+                , body = Http.emptyBody
+                , resolver =
+                    Http.bytesResolver <|
+                        \response ->
+                            case response of
+                                Http.GoodStatus_ _ body ->
+                                    case Wire3.bytesDecode decoder body of
+                                        Just model ->
+                                            Ok model
 
-                                Nothing ->
-                                    Err (Http.BadBody "Bytes decode failed")
+                                        Nothing ->
+                                            Err (Http.BadBody "Bytes decode failed")
 
-                        Http.BadStatus_ meta _ ->
-                            Err (Http.BadStatus meta.statusCode)
+                                Http.BadStatus_ meta _ ->
+                                    Err (Http.BadStatus meta.statusCode)
 
-                        Http.NetworkError_ ->
-                            Err Http.NetworkError
+                                Http.NetworkError_ ->
+                                    Err Http.NetworkError
 
-                        Http.Timeout_ ->
-                            Err Http.Timeout
+                                Http.Timeout_ ->
+                                    Err Http.Timeout
 
-                        Http.BadUrl_ url_ ->
-                            Err (Http.BadUrl url_)
-        , timeout = Nothing
-        }
+                                Http.BadUrl_ url_ ->
+                                    Err (Http.BadUrl url_)
+                , timeout = Nothing
+                }
+
+        Nothing ->
+            Task.fail (Http.BadUrl "Remote Url Encoding Failed")

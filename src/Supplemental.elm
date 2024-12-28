@@ -116,6 +116,9 @@ log noop logMsg ( model, cmd ) =
         logSize =
             Env.logSize |> String.toInt |> Maybe.withDefault 2000
 
+        x =
+            Time.now
+
         model_ =
             { model | logs = logMsg :: model.logs |> List.take logSize }
 
