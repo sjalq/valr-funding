@@ -3,6 +3,8 @@ module Backend exposing (..)
 import Env
 import Lamdera
 import Supplemental exposing (..)
+import SupplementalRPC
+import Task
 import Types exposing (..)
 
 
@@ -37,6 +39,16 @@ update msg model =
             ( model, Cmd.none )
                 |> log logMsg
 
+        GotRemoteModel result ->
+            case result of
+                Ok model_ ->
+                    ( model_, Cmd.none )
+                        |> log "GotRemoteModel Ok"
+
+                Err err ->
+                    ( model, Cmd.none )
+                        |> log ("GotRemoteModel Err: " ++ httpErrorToString err)
+
 
 updateFromFrontend : BrowserCookie -> ConnectionId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend browserCookie connectionId msg model =
@@ -64,7 +76,11 @@ updateFromFrontend browserCookie connectionId msg model =
             )
 
         Admin_FetchRemoteModel remoteUrl ->
-            ( model, Cmd.none )
+            ( model
+              -- put your production model key in here to fetch from your prod env.
+            , SupplementalRPC.fetchImportedModel remoteUrl "1234567890" Types.w3_decode_BackendModel
+                |> Task.attempt GotRemoteModel
+            )
 
 
 log =

@@ -2,6 +2,7 @@ module Types exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
+import Http
 import Lamdera exposing (ClientId, SessionId)
 import Url exposing (Url)
 
@@ -59,6 +60,7 @@ type FrontendMsg
     | UrlRequested UrlRequest
     | NoOpFrontendMsg
     | DirectToBackend ToBackend
+      --- Admin
     | Admin_PasswordOnChange String
     | Admin_SubmitPassword
     | Admin_RemoteUrlChanged String
@@ -75,6 +77,7 @@ type ToBackend
 type BackendMsg
     = NoOpBackendMsg
     | Log String
+    | GotRemoteModel (Result Http.Error BackendModel)
 
 
 type ToFrontend
