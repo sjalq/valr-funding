@@ -103,6 +103,7 @@ type FrontendMsg
     | UrlRequested UrlRequest
     | NoOpFrontendMsg
     | DirectToBackend ToBackend
+      --- Admin
     | Admin_PasswordOnChange String
     | Admin_SubmitPassword
     | GetViewport
