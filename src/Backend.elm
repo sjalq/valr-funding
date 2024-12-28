@@ -63,6 +63,9 @@ updateFromFrontend browserCookie connectionId msg model =
                 Lamdera.sendToFrontend connectionId (Admin_LoginResponse False)
             )
 
+        Admin_FetchRemoteModel remoteUrl ->
+            ( model, Cmd.none )
+
 
 log =
     Supplemental.log NoOpBackendMsg

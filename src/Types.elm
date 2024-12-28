@@ -31,12 +31,14 @@ type Route
 type AdminRoute
     = AdminDefault
     | AdminLogs
+    | AdminFetchModel
 
 
 type alias AdminPageModel =
     { logs : List String
     , isAuthenticated : Bool
     , password : String
+    , remoteUrl : String
     }
 
 
@@ -59,6 +61,7 @@ type FrontendMsg
     | DirectToBackend ToBackend
     | Admin_PasswordOnChange String
     | Admin_SubmitPassword
+    | Admin_RemoteUrlChanged String
 
 
 type ToBackend
@@ -66,6 +69,7 @@ type ToBackend
     | Admin_FetchLogs
     | Admin_ClearLogs
     | Admin_CheckPasswordBackend String
+    | Admin_FetchRemoteModel String
 
 
 type BackendMsg

@@ -11,7 +11,14 @@ import Types exposing (..)
 init : FrontendModel -> AdminRoute -> ( FrontendModel, Cmd FrontendMsg )
 init model adminRoute =
     if Env.stillTesting == "1" then
-        ( { model | adminPage = { isAuthenticated = True, password = "", logs = model.adminPage.logs } }
+        ( { model
+            | adminPage =
+                { isAuthenticated = True
+                , password = ""
+                , logs = model.adminPage.logs
+                , remoteUrl = ""
+                }
+          }
         , case adminRoute of
             AdminLogs ->
                 Lamdera.sendToBackend Admin_FetchLogs
@@ -50,6 +57,7 @@ viewTabs model =
     div [ Attr.class "flex border-b border-gray-200 mb-4" ]
         [ viewTab AdminDefault model "Default"
         , viewTab AdminLogs model "Logs"
+        , viewTab AdminFetchModel model "Fetch Model"
         ]
 
 
@@ -70,6 +78,9 @@ viewTab tab model label =
 
                 AdminLogs ->
                     "/admin/logs"
+
+                AdminFetchModel ->
+                    "/admin/fetch-model"
     in
     a
         [ Attr.href route
@@ -86,6 +97,9 @@ viewTabContent model =
 
         Admin AdminLogs ->
             viewLogsTab model
+
+        Admin AdminFetchModel ->
+            viewFetchModelTab model
 
         _ ->
             text "Not found"
@@ -113,6 +127,29 @@ viewLogsTab model =
                 |> List.reverse
                 |> List.indexedMap viewLogEntry
             )
+        ]
+
+
+viewFetchModelTab : FrontendModel -> Html FrontendMsg
+viewFetchModelTab model =
+    div [ Attr.class "max-w-lg mx-auto" ]
+        [ div [ Attr.class "mb-4" ]
+            [ label [ Attr.class "block text-gray-700 text-sm font-bold mb-2" ]
+                [ text "Remote URL" ]
+            , input
+                [ Attr.type_ "text"
+                , Attr.placeholder "Enter remote URL"
+                , Attr.value model.adminPage.remoteUrl
+                , Html.Events.onInput Admin_RemoteUrlChanged
+                , Attr.class "shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                ]
+                []
+            ]
+        , button
+            [ onClick (DirectToBackend (Admin_FetchRemoteModel model.adminPage.remoteUrl))
+            , Attr.class "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            ]
+            [ text "Fetch Model" ]
         ]
 
 

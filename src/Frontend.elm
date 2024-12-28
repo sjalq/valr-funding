@@ -48,6 +48,7 @@ init url key =
                 { logs = []
                 , isAuthenticated = False
                 , password = ""
+                , remoteUrl = ""
                 }
             }
     in
@@ -116,6 +117,13 @@ update msg model =
 
         Admin_SubmitPassword ->
             ( model, Lamdera.sendToBackend (Admin_CheckPasswordBackend model.adminPage.password) )
+
+        Admin_RemoteUrlChanged url ->
+            let
+                oldAdminPage =
+                    model.adminPage
+            in
+            ( { model | adminPage = { oldAdminPage | remoteUrl = url } }, Cmd.none )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
