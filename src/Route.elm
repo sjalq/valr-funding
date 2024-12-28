@@ -2,7 +2,8 @@ module Route exposing (..)
 
 import Types exposing (AdminRoute(..), Route(..))
 import Url exposing (Url)
-import Url.Parser as Parser exposing ((</>), Parser, oneOf, s)
+import Url.Parser as Parser exposing ((</>), (<?>), Parser, oneOf, s)
+import Url.Parser.Query as Query
 
 
 parser : Parser (Route -> a) a
@@ -11,7 +12,19 @@ parser =
         [ Parser.map Default Parser.top
         , Parser.map (Admin AdminDefault) (s "admin")
         , Parser.map (Admin AdminLogs) (s "admin" </> s "logs")
-        , Parser.map Funding (s "funding" </> Parser.string)
+        , Parser.map
+            (\( pair, days, page ) ->
+                Funding
+                    (Maybe.withDefault "BTCUSDTPERP" pair)
+                    (Maybe.withDefault 90 days)
+                    (Maybe.withDefault 1 page)
+            )
+            (s "funding"
+                <?> Query.map3 (\p d pg -> ( p, d, pg ))
+                        (Query.string "pair")
+                        (Query.int "compoundingPeriod")
+                        (Query.int "page")
+            )
         , Parser.map Heatmap (s "heatmap")
         ]
 
@@ -37,8 +50,8 @@ toString route =
         NotFound ->
             "/not-found"
 
-        Funding symbol ->
-            "/funding/" ++ symbol
+        Funding symbol days page ->
+            "/funding?pair=" ++ symbol ++ "&compoundingPeriod=" ++ String.fromInt days ++ "&page=" ++ String.fromInt page
 
         Heatmap ->
             "/heatmap"

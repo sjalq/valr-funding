@@ -25,11 +25,23 @@ type alias BrowserCookie =
     Lamdera.SessionId
 
 
+type alias Pair =
+    String
+
+
+type alias Page =
+    Int
+
+
+type alias CompoundingPeriod =
+    Int
+
+
 type Route
     = Default
     | Admin AdminRoute
     | NotFound
-    | Funding String
+    | Funding Pair CompoundingPeriod Page
     | Heatmap
 
 
@@ -52,14 +64,27 @@ type alias FundingRate =
     }
 
 
+type alias AnnualizedRate =
+    { fundingRate : FundingRate
+    , annualizedRate : Float
+    , compoundedRate : Float
+    , compoundedAnnualizedRate : Float
+    }
+
+
 type alias FrontendModel =
     { key : Key
     , currentRoute : Route
     , adminPage : AdminPageModel
-    , fundingRates : List ( FundingRate, Float )
     , allFundingRates : List FundingRate
+    , annualizedFundingRates : List AnnualizedRate
+    , paginatedFundingRates : List AnnualizedRate
     , symbol : String
+    , days : Int
+    , page : Int
+    , totalPages : Int
     , viewport : Maybe Viewport
+    , fundingDaysSlider : Int
     }
 
 
@@ -80,6 +105,8 @@ type FrontendMsg
     | Admin_SubmitPassword
     | GetViewport
     | GotViewport Browser.Dom.Viewport
+    | UpdateFundingDaysSlider Int
+    | ApplyFundingDays Int
 
 
 type ToBackend
@@ -90,7 +117,7 @@ type ToBackend
     | Admin_CheckPasswordBackend String
     | Admin_TriggerFundingRatesFetch
       ---
-    | FetchFundingRates String
+    | FetchFundingRates String (Maybe String)
     | FetchAllFundingRates
 
 
@@ -110,4 +137,3 @@ type ToFrontend
     | Admin_Logs_ToFrontend (List String)
     | Admin_LoginResponse Bool
     | FE_GotFundingRates (List FundingRate)
-    | FE_GotCompoundedRates (List ( FundingRate, Float ))

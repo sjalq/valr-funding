@@ -15,7 +15,7 @@ viewTabs model =
     div [ Attr.class "flex justify-center mb-5" ]
         [ viewTab "Default" Default model.currentRoute
         , viewTab "Admin" (Admin AdminDefault) model.currentRoute
-        , viewTab "Funding" (Funding "BTCZARPERP") model.currentRoute
+        , viewTab "Funding" (Funding "BTCZARPERP" 90 1) model.currentRoute
         , viewTab "Heatmap" Heatmap model.currentRoute
         ]
 
@@ -45,7 +45,7 @@ viewCurrentPage model =
         NotFound ->
             viewNotFoundPage
 
-        Funding symbol ->
+        Funding pair days page ->
             Pages.Funding.view model
 
         Heatmap ->

@@ -62,10 +62,15 @@ init url key =
                 , isAuthenticated = False
                 , password = ""
                 }
-            , fundingRates = []
             , allFundingRates = []
             , symbol = ""
+            , days = 90
+            , page = 1
+            , fundingDaysSlider = 90
             , viewport = Nothing
+            , annualizedFundingRates = []
+            , paginatedFundingRates = []
+            , totalPages = 1
             }
     in
     inits model route
@@ -81,8 +86,13 @@ inits model route =
         Default ->
             Pages.Default.init model
 
-        Funding symbol ->
-            Pages.Funding.init { model | symbol = symbol }
+        Funding pair days page ->
+            Pages.Funding.init
+                { model
+                    | symbol = pair
+                    , days = days
+                    , page = page
+                }
 
         Heatmap ->
             Pages.Heatmap.init model
@@ -149,6 +159,19 @@ update msg model =
         Admin_SubmitPassword ->
             ( model, Lamdera.sendToBackend (Admin_CheckPasswordBackend model.adminPage.password) )
 
+        UpdateFundingDaysSlider days ->
+            ( { model | fundingDaysSlider = days }
+            , Cmd.none
+            )
+
+        ApplyFundingDays days ->
+            ( { model
+                | currentRoute = Types.Funding model.symbol days model.page
+                , fundingDaysSlider = days
+              }
+            , Nav.pushUrl model.key ("/funding/" ++ model.symbol ++ "/" ++ String.fromInt days)
+            )
+
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
@@ -172,10 +195,15 @@ updateFromBackend msg model =
             ( { model | adminPage = { oldAdminPage | isAuthenticated = isAuthenticated } }, Cmd.none )
 
         FE_GotFundingRates rates ->
-            ( { model | allFundingRates = model.allFundingRates ++ rates }, Cmd.none )
+            let
+                symbol =
+                    rates |> List.head |> Maybe.map .currencyPair |> Maybe.withDefault ""
 
-        FE_GotCompoundedRates rates ->
-            ( { model | fundingRates = rates }, Cmd.none )
+                filteredRates =
+                    model.allFundingRates
+                        |> List.filter (\r -> r.currencyPair /= symbol)
+            in
+            ( { model | allFundingRates = filteredRates ++ rates }, Cmd.none )
 
 
 view : Model -> Browser.Document FrontendMsg
