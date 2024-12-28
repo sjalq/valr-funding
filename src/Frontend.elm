@@ -61,6 +61,7 @@ init url key =
                 { logs = []
                 , isAuthenticated = False
                 , password = ""
+                , remoteUrl = ""
                 }
             , allFundingRates = []
             , symbol = ""
@@ -171,6 +172,13 @@ update msg model =
               }
             , Nav.pushUrl model.key ("/funding/" ++ model.symbol ++ "/" ++ String.fromInt days)
             )
+
+        Admin_RemoteUrlChanged url ->
+            let
+                oldAdminPage =
+                    model.adminPage
+            in
+            ( { model | adminPage = { oldAdminPage | remoteUrl = url } }, Cmd.none )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )

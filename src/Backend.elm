@@ -10,6 +10,7 @@ import Lamdera
 import List.Extra as List
 import Process
 import Supplemental exposing (..)
+import SupplementalRPC exposing (fetchImportedModel)
 import Task exposing (Task)
 import Time
 import Types exposing (..)
@@ -107,6 +108,16 @@ update msg model =
             ( model, Cmd.none )
                 |> log logMsg
 
+        GotRemoteModel remoteModel ->
+            case remoteModel of
+                Ok model_ ->
+                    ( model_, Cmd.none )
+                        |> log "Got remote model"
+
+                Err err ->
+                    ( model, Cmd.none )
+                        |> log ("Error fetching remote model: " ++ (err |> Debug.log "Error" |> Supplemental.httpErrorToString))
+
         -------
         BE_GotFundingRates now result ->
             case result of
@@ -202,6 +213,9 @@ updateFromFrontend browserCookie connectionId msg model =
                     )
                 |> Cmd.batch
             )
+
+        Admin_FetchRemoteModel remoteUrl ->
+            ( model, fetchImportedModel remoteUrl "1234567890" Types.w3_decode_BackendModel |> Task.attempt GotRemoteModel )
 
 
 log =

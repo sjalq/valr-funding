@@ -48,12 +48,14 @@ type Route
 type AdminRoute
     = AdminDefault
     | AdminLogs
+    | AdminFetchModel
 
 
 type alias AdminPageModel =
     { logs : List String
     , isAuthenticated : Bool
     , password : String
+    , remoteUrl : String
     }
 
 
@@ -107,6 +109,7 @@ type FrontendMsg
     | GotViewport Browser.Dom.Viewport
     | UpdateFundingDaysSlider Int
     | ApplyFundingDays Int
+    | Admin_RemoteUrlChanged String
 
 
 type ToBackend
@@ -119,12 +122,14 @@ type ToBackend
       ---
     | FetchFundingRates String (Maybe String)
     | FetchAllFundingRates
+    | Admin_FetchRemoteModel String
 
 
 type BackendMsg
     = NoOpBackendMsg
     | DirectToFrontend ConnectionId ToFrontend
     | Log String
+    | GotRemoteModel (Result Http.Error BackendModel)
       ----------
     | BE_GotFundingRates Posix (Result Http.Error ( List String, List FundingRate ))
     | BE_FetchFundingRates Posix
