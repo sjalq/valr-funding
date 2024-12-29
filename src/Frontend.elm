@@ -2,6 +2,8 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
+import Fusion
+import Fusion.Patch
 import Html exposing (..)
 import Lamdera
 import Pages.Admin
@@ -50,6 +52,7 @@ init url key =
                 , password = ""
                 , remoteUrl = ""
                 }
+            , fusionState = Fusion.VUnloaded
             }
     in
     inits model route
@@ -125,6 +128,18 @@ update msg model =
             in
             ( { model | adminPage = { oldAdminPage | remoteUrl = url } }, Cmd.none )
 
+        Admin_FusionPatch patch ->
+            ( { model
+                | fusionState =
+                    Fusion.Patch.patch { force = False } patch model.fusionState
+                        |> Result.withDefault model.fusionState
+              }
+            , Lamdera.sendToBackend (Fusion_PersistPatch patch)
+            )
+
+        Admin_FusionQuery query ->
+            ( model, Lamdera.sendToBackend (Fusion_Query query) )
+
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
@@ -146,6 +161,9 @@ updateFromBackend msg model =
                     model.adminPage
             in
             ( { model | adminPage = { oldAdminPage | isAuthenticated = isAuthenticated } }, Cmd.none )
+
+        Admin_FusionResponse value ->
+            ( { model | fusionState = value }, Cmd.none )
 
 
 view : Model -> Browser.Document FrontendMsg

@@ -1,6 +1,9 @@
 module Pages.Admin exposing (..)
 
 import Env
+import Fusion.Editor
+import Fusion.Generated.TypeDict
+import Fusion.Generated.TypeDict.Types
 import Html exposing (..)
 import Html.Attributes as Attr
 import Html.Events exposing (onClick)
@@ -162,9 +165,15 @@ viewFetchModelTab model =
 
 viewFusionTab : FrontendModel -> Html FrontendMsg
 viewFusionTab model =
-    div [ Attr.class "p-4" ]
-        [ h2 [ Attr.class "text-xl font-bold mb-4" ] [ text "Fusion" ]
-        , div [] [ text "Fusion content goes here" ]
+    div [ Attr.class "p-4 bg-black text-white" ]
+        [ h2 [ Attr.class "text-xl font-bold mb-4" ] [ text "Fusion Editor" ]
+        , Fusion.Editor.value
+            { typeDict = Fusion.Generated.TypeDict.typeDict
+            , type_ = Just Fusion.Generated.TypeDict.Types.type_BackendModel
+            , editMsg = Admin_FusionPatch
+            , queryMsg = Admin_FusionQuery
+            }
+            model.fusionState
         ]
 
 

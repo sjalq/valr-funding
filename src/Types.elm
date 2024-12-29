@@ -2,6 +2,8 @@ module Types exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
+import Fusion
+import Fusion.Patch
 import Http
 import Lamdera exposing (ClientId, SessionId)
 import Url exposing (Url)
@@ -48,6 +50,7 @@ type alias FrontendModel =
     { key : Key
     , currentRoute : Route
     , adminPage : AdminPageModel
+    , fusionState : Fusion.Value
     }
 
 
@@ -65,6 +68,8 @@ type FrontendMsg
     | Admin_PasswordOnChange String
     | Admin_SubmitPassword
     | Admin_RemoteUrlChanged String
+    | Admin_FusionPatch Fusion.Patch.Patch
+    | Admin_FusionQuery Fusion.Query
 
 
 type ToBackend
@@ -73,6 +78,8 @@ type ToBackend
     | Admin_ClearLogs
     | Admin_CheckPasswordBackend String
     | Admin_FetchRemoteModel String
+    | Fusion_PersistPatch Fusion.Patch.Patch
+    | Fusion_Query Fusion.Query
 
 
 type BackendMsg
@@ -86,3 +93,4 @@ type ToFrontend
       -- Admin page
     | Admin_Logs_ToFrontend (List String)
     | Admin_LoginResponse Bool
+    | Admin_FusionResponse Fusion.Value
