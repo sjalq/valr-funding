@@ -21,6 +21,7 @@ See <https://dashboard.lamdera.app/docs/evergreen> for more info.
 
 import Evergreen.V3.Types
 import Evergreen.V4.Types
+import Fusion
 import Lamdera.Migrations exposing (..)
 
 
@@ -60,16 +61,15 @@ migrate_Types_FrontendModel old =
     , currentRoute = old.currentRoute |> migrate_Types_Route
     , adminPage = old.adminPage |> migrate_Types_AdminPageModel
     , allFundingRates = old.allFundingRates
-    , annualizedFundingRates = (Unimplemented {- Type `List (Evergreen.V4.Types.AnnualizedRate)` was added in V4. I need you to set a default value. -})
-    , paginatedFundingRates = (Unimplemented {- Type `List (Evergreen.V4.Types.AnnualizedRate)` was added in V4. I need you to set a default value. -})
+    , annualizedFundingRates = []
+    , paginatedFundingRates = []
     , symbol = old.symbol
-    , days = (Unimplemented {- Type `Int` was added in V4. I need you to set a default value. -})
-    , page = (Unimplemented {- Type `Int` was added in V4. I need you to set a default value. -})
-    , totalPages = (Unimplemented {- Type `Int` was added in V4. I need you to set a default value. -})
+    , days = 90
+    , page = 1
+    , totalPages = 1
     , viewport = old.viewport
-    , fundingDaysSlider = (Unimplemented {- Type `Int` was added in V4. I need you to set a default value. -})
-    , fusionState = (Unimplemented {- Type `Evergreen.V4.Fusion.Value` was added in V4. I need you to set a default value. -})
-    , fundingRates = (Unimplemented {- Field of type `List ((Evergreen.V3.Types.FundingRate, Float))` was removed in V4. I need you to do something with the `old.fundingRates` value if you wish to keep the data, then remove this line. -})
+    , fundingDaysSlider = 90
+    , fusionState = Fusion.Value.VUnloaded
     }
 
 
@@ -78,7 +78,7 @@ migrate_Types_AdminPageModel old =
     { logs = old.logs
     , isAuthenticated = old.isAuthenticated
     , password = old.password
-    , remoteUrl = (Unimplemented {- Type `String` was added in V4. I need you to set a default value. -})
+    , remoteUrl = ""
     }
 
 
@@ -91,16 +91,6 @@ migrate_Types_AdminRoute old =
         Evergreen.V3.Types.AdminLogs ->
             Evergreen.V4.Types.AdminLogs
 
-        notices ->
-            {- @NOTICE `AdminFetchModel` was added in V4.
-               This is just a reminder in case migrating some subset of the old data to this new value was important.
-               See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-            -}
-            {- @NOTICE `AdminFusion` was added in V4.
-               This is just a reminder in case migrating some subset of the old data to this new value was important.
-               See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-            -}
-            (Unimplemented {- New constructors were added. I need you to resolve the above notices and then remove this case. -})
 
 
 migrate_Types_BackendMsg : Evergreen.V3.Types.BackendMsg -> Evergreen.V4.Types.BackendMsg
@@ -123,13 +113,6 @@ migrate_Types_BackendMsg old =
 
         Evergreen.V3.Types.BE_FetchSymbolRates p0 p1 ->
             Evergreen.V4.Types.BE_FetchSymbolRates p0 p1
-
-        notices ->
-            {- @NOTICE `GotRemoteModel Result` was added in V4.
-               This is just a reminder in case migrating some subset of the old data to this new value was important.
-               See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-            -}
-            (Unimplemented {- New constructors were added. I need you to resolve the above notices and then remove this case. -})
 
 
 migrate_Types_FrontendMsg : Evergreen.V3.Types.FrontendMsg -> Evergreen.V4.Types.FrontendMsg
@@ -162,29 +145,6 @@ migrate_Types_FrontendMsg old =
         Evergreen.V3.Types.GotViewport p0 ->
             Evergreen.V4.Types.GotViewport p0
 
-        notices ->
-            {- @NOTICE `UpdateFundingDaysSlider Int` was added in V4.
-               This is just a reminder in case migrating some subset of the old data to this new value was important.
-               See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-            -}
-            {- @NOTICE `ApplyFundingDays Int` was added in V4.
-               This is just a reminder in case migrating some subset of the old data to this new value was important.
-               See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-            -}
-            {- @NOTICE `Admin_RemoteUrlChanged String` was added in V4.
-               This is just a reminder in case migrating some subset of the old data to this new value was important.
-               See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-            -}
-            {- @NOTICE `Admin_FusionPatch Evergreen.V4.Fusion.Patch.Patch` was added in V4.
-               This is just a reminder in case migrating some subset of the old data to this new value was important.
-               See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-            -}
-            {- @NOTICE `Admin_FusionQuery Evergreen.V4.Fusion.Query` was added in V4.
-               This is just a reminder in case migrating some subset of the old data to this new value was important.
-               See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-            -}
-            (Unimplemented {- New constructors were added. I need you to resolve the above notices and then remove this case. -})
-
 
 migrate_Types_Route : Evergreen.V3.Types.Route -> Evergreen.V4.Types.Route
 migrate_Types_Route old =
@@ -199,9 +159,7 @@ migrate_Types_Route old =
             Evergreen.V4.Types.NotFound
 
         Evergreen.V3.Types.Funding p0 ->
-            Evergreen.V4.Types.Funding (p0 |> (Unimplemented {- Type changed from `String` to `Evergreen.V4.Types.Pair`. I need you to write this migration. -}))
-                (Unimplemented {- This new variant needs to be initialised -})
-                (Unimplemented {- This new variant needs to be initialised -})
+            Evergreen.V4.Types.Default
 
         Evergreen.V3.Types.Heatmap ->
             Evergreen.V4.Types.Heatmap
@@ -226,26 +184,10 @@ migrate_Types_ToBackend old =
             Evergreen.V4.Types.Admin_TriggerFundingRatesFetch
 
         Evergreen.V3.Types.FetchFundingRates p0 ->
-            Evergreen.V4.Types.FetchFundingRates p0
-                (Unimplemented {- This new variant needs to be initialised -})
+            Evergreen.V4.Types.NoOpToBackend
 
         Evergreen.V3.Types.FetchAllFundingRates ->
             Evergreen.V4.Types.FetchAllFundingRates
-
-        notices ->
-            {- @NOTICE `Admin_FetchRemoteModel String` was added in V4.
-               This is just a reminder in case migrating some subset of the old data to this new value was important.
-               See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-            -}
-            {- @NOTICE `Fusion_PersistPatch Evergreen.V4.Fusion.Patch.Patch` was added in V4.
-               This is just a reminder in case migrating some subset of the old data to this new value was important.
-               See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-            -}
-            {- @NOTICE `Fusion_Query Evergreen.V4.Fusion.Query` was added in V4.
-               This is just a reminder in case migrating some subset of the old data to this new value was important.
-               See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-            -}
-            (Unimplemented {- New constructors were added. I need you to resolve the above notices and then remove this case. -})
 
 
 migrate_Types_ToFrontend : Evergreen.V3.Types.ToFrontend -> Evergreen.V4.Types.ToFrontend
@@ -264,16 +206,4 @@ migrate_Types_ToFrontend old =
             Evergreen.V4.Types.FE_GotFundingRates p0
 
         Evergreen.V3.Types.FE_GotCompoundedRates p0 ->
-            (Unimplemented
-             {- `FE_GotCompoundedRates` was removed or renamed in V4 so I couldn't figure out how to migrate it.
-                I need you to decide what happens to this Evergreen.V3.Types.FE_GotCompoundedRates value in a migration.
-                See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-             -}
-            )
-
-        notices ->
-            {- @NOTICE `Admin_FusionResponse Evergreen.V4.Fusion.Value` was added in V4.
-               This is just a reminder in case migrating some subset of the old data to this new value was important.
-               See https://dashboard.lamdera.app/tips/modified-custom-type for more info.
-            -}
-            (Unimplemented {- New constructors were added. I need you to resolve the above notices and then remove this case. -})
+            Evergreen.V4.Types.NoOpToFrontend
