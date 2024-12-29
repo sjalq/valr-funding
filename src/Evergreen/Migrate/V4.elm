@@ -21,7 +21,7 @@ See <https://dashboard.lamdera.app/docs/evergreen> for more info.
 
 import Evergreen.V3.Types
 import Evergreen.V4.Types
-import Fusion
+import Fusion exposing (Value(..))
 import Lamdera.Migrations exposing (..)
 
 
@@ -69,7 +69,7 @@ migrate_Types_FrontendModel old =
     , totalPages = 1
     , viewport = old.viewport
     , fundingDaysSlider = 90
-    , fusionState = Fusion.Value.VUnloaded
+    , fusionState = VUnloaded
     }
 
 
@@ -90,7 +90,6 @@ migrate_Types_AdminRoute old =
 
         Evergreen.V3.Types.AdminLogs ->
             Evergreen.V4.Types.AdminLogs
-
 
 
 migrate_Types_BackendMsg : Evergreen.V3.Types.BackendMsg -> Evergreen.V4.Types.BackendMsg
