@@ -1,7 +1,5 @@
 module Backend exposing (..)
 
-import Dict
-import Dict.Extra as Dict
 import Env
 import Http exposing (..)
 import Iso8601
@@ -12,6 +10,7 @@ import Process
 import Supplemental exposing (..)
 import SupplementalRPC
 import Task
+import Time
 import Types exposing (..)
 
 
@@ -158,16 +157,6 @@ update msg model =
             , Lamdera.sendToFrontend connectionId (FE_GotFundingRates rates)
             )
 
-        GotRemoteModel result ->
-            case result of
-                Ok model_ ->
-                    ( model_, Cmd.none )
-                        |> log "GotRemoteModel Ok"
-
-                Err err ->
-                    ( model, Cmd.none )
-                        |> log ("GotRemoteModel Err: " ++ httpErrorToString err)
-
 
 updateFromFrontend : BrowserCookie -> ConnectionId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontend browserCookie connectionId msg model =
@@ -266,7 +255,7 @@ addTimeStr add str =
         |> Result.withDefault str
 
 
-getFundingRates : Model -> List String -> Time.Posix -> Task Http.Error ( List String, List FundingRate )
+getFundingRates : Model -> List String -> Time.Posix -> Task.Task Http.Error ( List String, List FundingRate )
 getFundingRates model remainingSymbols now =
     let
         decoder =
