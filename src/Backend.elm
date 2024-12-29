@@ -240,7 +240,7 @@ updateFromFrontend browserCookie connectionId msg model =
                     ( model
                     , Cmd.none
                     )
-                        |> log ("Failed to apply fusion patch: " ++ Debug.toString err)
+                        |> log "Failed to apply fusion patch"
 
         Fusion_Query query ->
             ( model
