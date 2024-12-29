@@ -33,6 +33,7 @@ type AdminRoute
     = AdminDefault
     | AdminLogs
     | AdminFetchModel
+    | AdminFusion
 
 
 type alias AdminPageModel =

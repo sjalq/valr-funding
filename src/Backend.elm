@@ -2,8 +2,8 @@ module Backend exposing (..)
 
 import Env
 import Lamdera
+import RPC
 import Supplemental exposing (..)
-import SupplementalRPC
 import Task
 import Types exposing (..)
 
@@ -78,7 +78,7 @@ updateFromFrontend browserCookie connectionId msg model =
         Admin_FetchRemoteModel remoteUrl ->
             ( model
               -- put your production model key in here to fetch from your prod env.
-            , SupplementalRPC.fetchImportedModel remoteUrl "1234567890" Types.w3_decode_BackendModel
+            , RPC.fetchImportedModel remoteUrl "1234567890"
                 |> Task.attempt GotRemoteModel
             )
 

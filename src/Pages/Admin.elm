@@ -58,6 +58,7 @@ viewTabs model =
         [ viewTab AdminDefault model "Default"
         , viewTab AdminLogs model "Logs"
         , viewTab AdminFetchModel model "Fetch Model"
+        , viewTab AdminFusion model "Fusion"
         ]
 
 
@@ -81,6 +82,9 @@ viewTab tab model label =
 
                 AdminFetchModel ->
                     "/admin/fetch-model"
+
+                AdminFusion ->
+                    "/admin/fusion"
     in
     a
         [ Attr.href route
@@ -100,6 +104,9 @@ viewTabContent model =
 
         Admin AdminFetchModel ->
             viewFetchModelTab model
+
+        Admin AdminFusion ->
+            viewFusionTab model
 
         _ ->
             text "Not found"
@@ -150,6 +157,14 @@ viewFetchModelTab model =
             , Attr.class "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             ]
             [ text "Fetch Model" ]
+        ]
+
+
+viewFusionTab : FrontendModel -> Html FrontendMsg
+viewFusionTab model =
+    div [ Attr.class "p-4" ]
+        [ h2 [ Attr.class "text-xl font-bold mb-4" ] [ text "Fusion" ]
+        , div [] [ text "Fusion content goes here" ]
         ]
 
 
