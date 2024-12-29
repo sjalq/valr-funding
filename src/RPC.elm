@@ -9,7 +9,9 @@ import Lamdera.Wire3
 import LamderaRPC exposing (..)
 import Supplemental exposing (..)
 import SupplementalRPC exposing (..)
+import Task
 import Types exposing (..)
+import Url
 
 
 lamdera_handleEndpoints :
@@ -45,6 +47,26 @@ lamdera_handleEndpoints rawReq args model =
             ( result, newModel, cmds ) |> rpcLog (encodeRPCCallAndResult args result)
 
 
+getLogs _ model headers _ =
+    case headers |> Dict.get "x-lamdera-model-key" of
+        Just modelKey ->
+            if Env.modelKey == modelKey then
+                ( Encode.list Encode.string model.logs |> Ok, model, Cmd.none )
+
+            else
+                ( Http.BadStatus 401 |> Err, model, Cmd.none )
+
+        Nothing ->
+            ( Http.BadStatus 401 |> Err, model, Cmd.none )
+
+
+
+{-
+   Expose the model via an endpoint
+   VERY useful for getting live data into your local env.
+-}
+
+
 getModel : HttpRequest -> SessionId -> BackendModel -> Dict.Dict String String -> input -> ( Result Http.Error BackendModel, BackendModel, Cmd msg )
 getModel _ _ model headers _ =
     case headers |> Dict.get "x-lamdera-model-key" of
@@ -59,17 +81,58 @@ getModel _ _ model headers _ =
             ( Http.BadStatus 401 |> Err, model, Cmd.none )
 
 
-getLogs _ model headers _ =
-    case headers |> Dict.get "x-lamdera-model-key" of
-        Just modelKey ->
-            if Env.modelKey == modelKey then
-                ( Encode.list Encode.string model.logs |> Ok, model, Cmd.none )
+makeModelImportUrl : String -> Maybe String
+makeModelImportUrl remoteLamderaUrl =
+    Url.fromString remoteLamderaUrl
+        |> Maybe.map (\url -> { url | path = "/_r/getModel/" } |> Url.toString)
 
-            else
-                ( Http.BadStatus 401 |> Err, model, Cmd.none )
+
+fetchImportedModel : String -> String -> Task.Task Http.Error BackendModel
+fetchImportedModel remoteLamderaUrl modelKey =
+    case makeModelImportUrl remoteLamderaUrl of
+        Just url ->
+            Http.task
+                { method = "POST"
+                , headers =
+                    [ Http.header "Content-Type" "application/octet-stream"
+                    , Http.header "x-lamdera-model-key" modelKey
+                    ]
+                , url = url |> addProxy
+                , body = Http.emptyBody
+                , resolver =
+                    Http.bytesResolver <|
+                        \response ->
+                            case response of
+                                Http.GoodStatus_ _ body ->
+                                    case Lamdera.Wire3.bytesDecode Types.w3_decode_BackendModel body of
+                                        Just model ->
+                                            Ok model
+
+                                        Nothing ->
+                                            Err (Http.BadBody "Bytes decode failed")
+
+                                Http.BadStatus_ meta _ ->
+                                    Err (Http.BadStatus meta.statusCode)
+
+                                Http.NetworkError_ ->
+                                    Err Http.NetworkError
+
+                                Http.Timeout_ ->
+                                    Err Http.Timeout
+
+                                Http.BadUrl_ url_ ->
+                                    Err (Http.BadUrl url_)
+                , timeout = Nothing
+                }
 
         Nothing ->
-            ( Http.BadStatus 401 |> Err, model, Cmd.none )
+            Task.fail (Http.BadUrl "Remote Url Encoding Failed")
+
+
+
+{-
+   Because of the difference in function signatures, we need a seperate rpcLog
+-}
 
 
 rpcLog =

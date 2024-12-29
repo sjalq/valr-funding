@@ -27,6 +27,7 @@ parser =
                         (Query.int "page")
             )
         , Parser.map Heatmap (s "heatmap")
+        , Parser.map (Admin AdminFusion) (s "admin" </> s "fusion")
         ]
 
 
@@ -50,6 +51,9 @@ toString route =
 
         Admin AdminFetchModel ->
             "/admin/fetch-model"
+
+        Admin AdminFusion ->
+            "/admin/fusion"
 
         NotFound ->
             "/not-found"

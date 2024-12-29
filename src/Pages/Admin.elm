@@ -1,6 +1,9 @@
 module Pages.Admin exposing (..)
 
 import Env
+import Fusion.Editor
+import Fusion.Generated.TypeDict
+import Fusion.Generated.TypeDict.Types
 import Html exposing (..)
 import Html.Attributes as Attr
 import Html.Events exposing (onClick)
@@ -58,6 +61,7 @@ viewTabs model =
         [ viewTab AdminDefault model "Default"
         , viewTab AdminLogs model "Logs"
         , viewTab AdminFetchModel model "Fetch Model"
+        , viewTab AdminFusion model "Fusion"
         ]
 
 
@@ -81,6 +85,9 @@ viewTab tab model label =
 
                 AdminFetchModel ->
                     "/admin/fetch-model"
+
+                AdminFusion ->
+                    "/admin/fusion"
     in
     a
         [ Attr.href route
@@ -100,6 +107,9 @@ viewTabContent model =
 
         Admin AdminFetchModel ->
             viewFetchModelTab model
+
+        Admin AdminFusion ->
+            viewFusionTab model
 
         _ ->
             text "Not found"
@@ -158,6 +168,20 @@ viewFetchModelTab model =
             , Attr.class "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             ]
             [ text "Fetch Model" ]
+        ]
+
+
+viewFusionTab : FrontendModel -> Html FrontendMsg
+viewFusionTab model =
+    div [ Attr.class "p-4 bg-black text-white" ]
+        [ h2 [ Attr.class "text-xl font-bold mb-4" ] [ text "Fusion Editor" ]
+        , Fusion.Editor.value
+            { typeDict = Fusion.Generated.TypeDict.typeDict
+            , type_ = Just Fusion.Generated.TypeDict.Types.type_BackendModel
+            , editMsg = Admin_FusionPatch
+            , queryMsg = Admin_FusionQuery
+            }
+            model.fusionState
         ]
 
 

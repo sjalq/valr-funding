@@ -1,14 +1,16 @@
 module Backend exposing (..)
 
 import Env
+import Fusion.Generated.Types
+import Fusion.Patch
 import Http exposing (..)
 import Iso8601
 import Json.Decode as D
 import Lamdera
 import List.Extra as List
 import Process
+import RPC
 import Supplemental exposing (..)
-import SupplementalRPC
 import Task
 import Time
 import Types exposing (..)
@@ -215,8 +217,34 @@ updateFromFrontend browserCookie connectionId msg model =
         Admin_FetchRemoteModel remoteUrl ->
             ( model
               -- put your production model key in here to fetch from your prod env.
-            , SupplementalRPC.fetchImportedModel remoteUrl "1234567890" Types.w3_decode_BackendModel
+            , RPC.fetchImportedModel remoteUrl "1234567890"
                 |> Task.attempt GotRemoteModel
+            )
+
+        Fusion_PersistPatch patch ->
+            let
+                value =
+                    Fusion.Patch.patch { force = False } patch (Fusion.Generated.Types.toValue_BackendModel model)
+                        |> Result.withDefault (Fusion.Generated.Types.toValue_BackendModel model)
+            in
+            case
+                Fusion.Generated.Types.build_BackendModel value
+            of
+                Ok newModel ->
+                    ( newModel
+                      -- , Lamdera.sendToFrontend connectionId (Admin_FusionResponse value)
+                    , Cmd.none
+                    )
+
+                Err err ->
+                    ( model
+                    , Cmd.none
+                    )
+                        |> log ("Failed to apply fusion patch: " ++ Debug.toString err)
+
+        Fusion_Query query ->
+            ( model
+            , Lamdera.sendToFrontend connectionId (Admin_FusionResponse (Fusion.Generated.Types.toValue_BackendModel model))
             )
 
 

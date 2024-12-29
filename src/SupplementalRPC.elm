@@ -1,12 +1,7 @@
 module SupplementalRPC exposing (..)
 
-import Http
 import Json.Encode as Encode
-import Lamdera.Wire3 as Wire3
 import LamderaRPC exposing (..)
-import Supplemental exposing (addProxy)
-import Task
-import Url
 
 
 
@@ -116,51 +111,3 @@ encodeRPCCallAndResult args result =
             , ( "result", stringifyRPCResult result |> Encode.string )
             ]
         )
-
-
-makeModelImportUrl : String -> Maybe String
-makeModelImportUrl remoteLamderaUrl =
-    Url.fromString remoteLamderaUrl
-        |> Maybe.map (\url -> { url | path = "/_r/getModel/" } |> Url.toString)
-
-
-fetchImportedModel : String -> String -> Wire3.Decoder value -> Task.Task Http.Error value
-fetchImportedModel remoteLamderaUrl modelKey decoder =
-    case makeModelImportUrl remoteLamderaUrl of
-        Just url ->
-            Http.task
-                { method = "POST"
-                , headers =
-                    [ Http.header "Content-Type" "application/octet-stream"
-                    , Http.header "x-lamdera-model-key" modelKey
-                    ]
-                , url = url |> addProxy
-                , body = Http.emptyBody
-                , resolver =
-                    Http.bytesResolver <|
-                        \response ->
-                            case response of
-                                Http.GoodStatus_ _ body ->
-                                    case Wire3.bytesDecode decoder body of
-                                        Just model ->
-                                            Ok model
-
-                                        Nothing ->
-                                            Err (Http.BadBody "Bytes decode failed")
-
-                                Http.BadStatus_ meta _ ->
-                                    Err (Http.BadStatus meta.statusCode)
-
-                                Http.NetworkError_ ->
-                                    Err Http.NetworkError
-
-                                Http.Timeout_ ->
-                                    Err Http.Timeout
-
-                                Http.BadUrl_ url_ ->
-                                    Err (Http.BadUrl url_)
-                , timeout = Nothing
-                }
-
-        Nothing ->
-            Task.fail (Http.BadUrl "Remote Url Encoding Failed")

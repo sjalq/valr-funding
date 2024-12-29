@@ -3,8 +3,10 @@ module Types exposing (..)
 import Browser exposing (UrlRequest)
 import Browser.Dom exposing (Viewport)
 import Browser.Navigation exposing (Key)
+import Fusion
+import Fusion.Patch
 import Http
-import Lamdera exposing (ClientId, SessionId)
+import Lamdera
 import Lamdera.Debug exposing (Posix)
 import Url exposing (Url)
 
@@ -49,6 +51,7 @@ type AdminRoute
     = AdminDefault
     | AdminLogs
     | AdminFetchModel
+    | AdminFusion
 
 
 type alias AdminPageModel =
@@ -87,6 +90,7 @@ type alias FrontendModel =
     , totalPages : Int
     , viewport : Maybe Viewport
     , fundingDaysSlider : Int
+    , fusionState : Fusion.Value
     }
 
 
@@ -111,6 +115,8 @@ type FrontendMsg
     | UpdateFundingDaysSlider Int
     | ApplyFundingDays Int
     | Admin_RemoteUrlChanged String
+    | Admin_FusionPatch Fusion.Patch.Patch
+    | Admin_FusionQuery Fusion.Query
 
 
 type ToBackend
@@ -124,6 +130,8 @@ type ToBackend
     | FetchFundingRates String (Maybe String)
     | FetchAllFundingRates
     | Admin_FetchRemoteModel String
+    | Fusion_PersistPatch Fusion.Patch.Patch
+    | Fusion_Query Fusion.Query
 
 
 type BackendMsg
@@ -143,3 +151,4 @@ type ToFrontend
     | Admin_Logs_ToFrontend (List String)
     | Admin_LoginResponse Bool
     | FE_GotFundingRates (List FundingRate)
+    | Admin_FusionResponse Fusion.Value
