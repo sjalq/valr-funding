@@ -419,8 +419,14 @@ appendRates model rates =
 
         isNewRate rate =
             not <| List.any (\r -> r.currencyPair == rate.currencyPair && r.fundingTime == rate.fundingTime) model.rates
+
+        newRates =
+            List.filter isNewRate rates
+
+        updatedRates =
+            model.rates ++ newRates |> List.sortBy (\r -> ( r.currencyPair, r.fundingTime ))
     in
-    { model | rates = model.rates ++ List.filter isNewRate rates }
+    { model | rates = updatedRates }
 
 
 compoundRates : Int -> List FundingRate -> List ( FundingRate, Float )

@@ -225,8 +225,11 @@ updateFromBackend msg model =
                 filteredRates =
                     model.allFundingRates
                         |> List.filter (\r -> r.currencyPair /= symbol)
+
+                updatedRates =
+                    filteredRates ++ rates |> List.sortBy (\r -> ( r.currencyPair, r.fundingTime )) |> List.reverse
             in
-            ( { model | allFundingRates = filteredRates ++ rates }, Cmd.none )
+            ( { model | allFundingRates = updatedRates }, Cmd.none )
 
         Admin_FusionResponse value ->
             ( { model | fusionState = value }, Cmd.none )
