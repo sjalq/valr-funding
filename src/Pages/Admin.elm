@@ -58,7 +58,7 @@ viewTabs model =
         [ viewTab AdminDefault model "Default"
         , viewTab AdminLogs model "Logs"
         , viewTab AdminFetchModel model "Fetch Model"
-        , viewTab AdminFusion model "Fusion"
+        --, viewTab AdminFusion model "Fusion"
         ]
 
 
@@ -114,22 +114,24 @@ viewTabContent model =
 
 viewDefaultTab : FrontendModel -> Html FrontendMsg
 viewDefaultTab model =
-    div []
-        [ text "Default admin content" ]
+    div [ Attr.class "p-4 bg-white rounded-lg shadow" ]
+        [ h2 [ Attr.class "text-xl font-bold mb-4" ] [ text "Default Admin" ]
+        , div [] [ text "Default admin content" ]
+        ]
 
 
 viewLogsTab : FrontendModel -> Html FrontendMsg
 viewLogsTab model =
-    div [ Attr.class "bg-black text-yellow-100 font-mono p-4 rounded" ]
+    div [ Attr.class "p-4 bg-white rounded-lg shadow" ]
         [ div [ Attr.class "flex justify-between items-center mb-4" ]
-            [ h2 [ Attr.class "text-xl" ] [ text "System Logs" ]
+            [ h2 [ Attr.class "text-xl font-bold" ] [ text "System Logs" ]
             , button
                 [ onClick (DirectToBackend Admin_ClearLogs)
                 , Attr.class "bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                 ]
                 [ text "Clear Logs" ]
             ]
-        , div [ Attr.class "space-y-1" ]
+        , div [ Attr.class "bg-black text-yellow-100 font-mono p-4 rounded space-y-1" ]
             (model.adminPage.logs
                 |> List.reverse
                 |> List.indexedMap viewLogEntry
@@ -139,30 +141,33 @@ viewLogsTab model =
 
 viewFetchModelTab : FrontendModel -> Html FrontendMsg
 viewFetchModelTab model =
-    div [ Attr.class "max-w-lg mx-auto" ]
-        [ div [ Attr.class "mb-4" ]
-            [ label [ Attr.class "block text-gray-700 text-sm font-bold mb-2" ]
-                [ text "Remote URL" ]
-            , input
-                [ Attr.type_ "text"
-                , Attr.placeholder "Enter remote URL"
-                , Attr.value model.adminPage.remoteUrl
-                , Html.Events.onInput Admin_RemoteUrlChanged
-                , Attr.class "shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+    div [ Attr.class "p-4 bg-white rounded-lg shadow" ]
+        [ h2 [ Attr.class "text-xl font-bold mb-4" ] [ text "Fetch Model" ]
+        , div []
+            [ div [ Attr.class "mb-4" ]
+                [ label [ Attr.class "block text-gray-700 text-sm font-bold mb-2" ]
+                    [ text "Remote URL" ]
+                , input
+                    [ Attr.type_ "text"
+                    , Attr.placeholder "Enter remote URL"
+                    , Attr.value model.adminPage.remoteUrl
+                    , Html.Events.onInput Admin_RemoteUrlChanged
+                    , Attr.class "shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    ]
+                    []
                 ]
-                []
+            , button
+                [ onClick (DirectToBackend (Admin_FetchRemoteModel model.adminPage.remoteUrl))
+                , Attr.class "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                ]
+                [ text "Fetch Model" ]
             ]
-        , button
-            [ onClick (DirectToBackend (Admin_FetchRemoteModel model.adminPage.remoteUrl))
-            , Attr.class "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-            ]
-            [ text "Fetch Model" ]
         ]
 
 
 viewFusionTab : FrontendModel -> Html FrontendMsg
 viewFusionTab model =
-    div [ Attr.class "p-4" ]
+    div [ Attr.class "p-4 bg-white rounded-lg shadow" ]
         [ h2 [ Attr.class "text-xl font-bold mb-4" ] [ text "Fusion" ]
         , div [] [ text "Fusion content goes here" ]
         ]
