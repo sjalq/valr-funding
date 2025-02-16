@@ -38,10 +38,10 @@ responseStringToResult response =
         Http.NetworkError_ ->
             Err Http.NetworkError
 
-        Http.BadStatus_ metadata body ->
+        Http.BadStatus_ metadata _ ->
             Err (Http.BadStatus metadata.statusCode)
 
-        Http.GoodStatus_ metadata body ->
+        Http.GoodStatus_ _ body ->
             Ok body
 
 

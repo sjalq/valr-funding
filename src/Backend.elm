@@ -185,12 +185,11 @@ updateFromFrontend browserCookie connectionId msg model =
                 Lamdera.sendToFrontend connectionId (Admin_LoginResponse False)
             )
 
-        FetchFundingRates symbol latestDate ->
+        FetchFundingRates symbol ->
             let
                 rates =
                     model.rates
                         |> List.filter (\r -> r.currencyPair == symbol)
-                        |> List.filter (\r -> r.fundingTime > (latestDate |> Maybe.withDefault "1970-01-01T00:00:00Z"))
             in
             ( model
             , Lamdera.sendToFrontend connectionId (FE_GotFundingRates rates)

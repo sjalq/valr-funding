@@ -4,12 +4,10 @@ import Browser.Dom exposing (Viewport)
 import Dict exposing (Dict)
 import Dict.Extra as Dict
 import Html exposing (Html)
-import Html.Attributes as Attr
 import List.Extra as List
 import Supplemental
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
-import Time exposing (Posix)
 import Types exposing (..)
 
 

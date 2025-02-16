@@ -1,7 +1,7 @@
 module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
-import Browser.Dom exposing (Viewport)
+import Browser.Dom
 import Browser.Events
 import Browser.Navigation as Nav
 import Fusion
@@ -38,7 +38,7 @@ app =
 
 
 subscriptions : FrontendModel -> Sub FrontendMsg
-subscriptions model =
+subscriptions _ =
     Sub.batch
         [ Browser.Events.onResize
             (\width height ->
@@ -163,19 +163,6 @@ update msg model =
         Admin_SubmitPassword ->
             ( model, Lamdera.sendToBackend (Admin_CheckPasswordBackend model.adminPage.password) )
 
-        UpdateFundingDaysSlider days ->
-            ( { model | fundingDaysSlider = days }
-            , Cmd.none
-            )
-
-        ApplyFundingDays days ->
-            ( { model
-                | currentRoute = Types.Funding model.symbol days model.page
-                , fundingDaysSlider = days
-              }
-            , Nav.pushUrl model.key ("/funding/" ++ model.symbol ++ "/" ++ String.fromInt days)
-            )
-
         Admin_RemoteUrlChanged url ->
             let
                 oldAdminPage =
@@ -194,6 +181,19 @@ update msg model =
 
         Admin_FusionQuery query ->
             ( model, Lamdera.sendToBackend (Fusion_Query query) )
+
+        UpdateFundingDaysSlider days ->
+            ( { model | fundingDaysSlider = days }
+            , Cmd.none
+            )
+
+        ApplyFundingDays days ->
+            ( { model
+                | currentRoute = Types.Funding model.symbol days model.page
+                , fundingDaysSlider = days
+              }
+            , Nav.pushUrl model.key ("/funding/" ++ model.symbol ++ "/" ++ String.fromInt days)
+            )
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )

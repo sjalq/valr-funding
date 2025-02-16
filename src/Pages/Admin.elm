@@ -116,7 +116,7 @@ viewTabContent model =
 
 
 viewDefaultTab : FrontendModel -> Html FrontendMsg
-viewDefaultTab model =
+viewDefaultTab _ =
     div []
         [ text "Default admin content"
         , div [ Attr.class "mt-4" ]

@@ -4,9 +4,7 @@ import Funding exposing (..)
 import Html exposing (..)
 import Html.Attributes as Attr
 import Html.Events exposing (onInput)
-import Html.Lazy exposing (lazy, lazy2, lazy3)
 import Iso8601
-import Json.Decode
 import Supplemental exposing (..)
 import Task
 import Time
@@ -58,18 +56,18 @@ init model =
                 , totalPages = totalPages
             }
     in
-    ( newModel
-    , old
-        |> Task.attempt
-            (\x ->
-                case x of
-                    Ok True ->
-                        DirectToBackend (FetchFundingRates model.symbol (Just latestDateStr))
+    ( newModel, Cmd.batch [ performNow (DirectToBackend (FetchFundingRates model.symbol)) ] )
 
-                    _ ->
-                        NoOpFrontendMsg
-            )
-    )
+
+init2 : FrontendModel -> ( FrontendModel, Cmd FrontendMsg )
+init2 model =
+    -- if we got the data, calculate the avgs
+    -- if we aint got the data, fetch the data, but then trigger whatever triggered this again so we can get the avgs
+    if model.allFundingRates /= [] then
+        ( model, Cmd.none )
+
+    else
+        
 
 
 itemsPerPage =
@@ -129,15 +127,14 @@ viewDaysSlider sliderDays actualDays =
 viewRates : FrontendModel -> Int -> Int -> Html msg
 viewRates model days page =
     let
-        startIndex =
-            (page - 1) * itemsPerPage
-
-        -- ratesWithCompounded =
-        --     model.allFundingRates
-        --         |> List.filter (\r -> r.currencyPair == model.symbol)
-        --         |> Funding.compoundRates (days * 24)
         totalPages =
             ceiling (toFloat (List.length model.annualizedFundingRates) / toFloat itemsPerPage)
+
+        _ =
+            Debug.log "paginatedFundingRates" model.paginatedFundingRates
+
+        _ =
+            Debug.log "totalPages" totalPages
     in
     div [ Attr.class "overflow-x-auto" ]
         [ viewRatesTable days model.paginatedFundingRates

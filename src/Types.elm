@@ -127,7 +127,7 @@ type ToBackend
     | Admin_CheckPasswordBackend String
     | Admin_TriggerFundingRatesFetch
       ---
-    | FetchFundingRates String (Maybe String)
+    | FetchFundingRates String
     | FetchAllFundingRates
     | Admin_FetchRemoteModel String
     | Fusion_PersistPatch Fusion.Patch.Patch

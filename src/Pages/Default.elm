@@ -11,7 +11,7 @@ init model =
 
 
 view : FrontendModel -> Html FrontendMsg
-view model =
+view _ =
     div [ Attr.class "bg-gray-100 min-h-screen" ]
         [ div [ Attr.class "container mx-auto px-4 py-8" ]
             [ h1 [ Attr.class "text-3xl font-bold mb-4" ]
