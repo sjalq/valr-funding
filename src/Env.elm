@@ -55,3 +55,17 @@ googleAppClientId =
 githubAppClientSecret : String
 githubAppClientSecret =
     ""
+
+auth0AppClientId : String
+auth0AppClientId =
+    ""  -- Replace with your actual Client ID
+
+
+auth0AppClientSecret : String
+auth0AppClientSecret =
+    ""  -- Replace with your actual Client Secret
+
+
+auth0AppTenant : String
+auth0AppTenant =
+    "" -- Replace with tenant, e.g., "your-domain.auth0.com" 

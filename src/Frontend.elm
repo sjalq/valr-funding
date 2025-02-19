@@ -155,6 +155,9 @@ update msg model =
         Logout ->
             ( { model | login = NotLogged False }, Lamdera.sendToBackend LoggedOut )
                
+        Auth0SigninRequested ->
+            Auth.Flow.signInRequested "OAuthAuth0" { model | login = NotLogged True } Nothing
+                |> Tuple.mapSecond (AuthToBackend >> Lamdera.sendToBackend)
 
 
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
@@ -206,6 +209,19 @@ view model =
     }
 
 
+callbackForAuth0Auth : FrontendModel -> Url.Url -> Nav.Key -> ( FrontendModel, Cmd FrontendMsg )
+callbackForAuth0Auth model url key =
+    let
+        ( authM, authCmd ) =
+            Auth.Flow.init model
+                "OAuthAuth0"
+                url
+                key
+                (\msg -> Lamdera.sendToBackend (AuthToBackend msg))
+    in
+    ( authM, authCmd )
+
+
 callbackForGoogleAuth : FrontendModel -> Url.Url -> Nav.Key -> ( FrontendModel, Cmd FrontendMsg )
 callbackForGoogleAuth model url key =
     let
@@ -229,6 +245,9 @@ authCallbackCmd model url key =
         "/login/OAuthGoogle/callback" ->
             callbackForGoogleAuth model url key
 
+        "/login/OAuthAuth0/callback" ->
+            callbackForAuth0Auth model url key
+
         _ ->
             ( model, Cmd.none )
 
@@ -248,8 +267,8 @@ viewWithAuth model =
     { title = "View Auth Test"
     , body =
         [ Html.button
-            [ HE.onClick GoogleSigninRequested ]
-            [ Html.text "Sign in with Google" ]
+            [ HE.onClick Auth0SigninRequested ]
+            [ Html.text "Sign in with Auth0" ]
         ]
     }
 

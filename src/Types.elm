@@ -76,6 +76,7 @@ type FrontendMsg
     | Admin_SubmitPassword
     | Admin_RemoteUrlChanged String
     | GoogleSigninRequested
+    | Auth0SigninRequested
     | Logout
 
 

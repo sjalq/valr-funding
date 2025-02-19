@@ -4,6 +4,7 @@ import Auth.Common
 import Auth.Flow
 import Auth.Method.EmailMagicLink
 import Auth.Method.OAuthGithub
+import Auth.Method.OAuthAuth0
 import Auth.Method.OAuthGoogle
 import Dict exposing (Dict)
 import Env
@@ -96,6 +97,10 @@ updateFromFrontend browserCookie connectionId msg model =
             )
 
         AuthToBackend authToBackend ->
+            let
+                _ =
+                    Debug.log "AuthToBackend" authToBackend
+            in
             Auth.Flow.updateFromFrontend (backendConfig model) connectionId browserCookie authToBackend model
 
         GetUserToBackend ->
@@ -174,7 +179,7 @@ config =
     , sendToFrontend = Lamdera.sendToFrontend
     , sendToBackend = Lamdera.sendToBackend
     , renewSession = renewSession
-    , methods = [ Auth.Method.OAuthGoogle.configuration Env.googleAppClientId Env.googleAppClientSecret ]
+    , methods = [ Auth.Method.OAuthGoogle.configuration Env.googleAppClientId Env.googleAppClientSecret, Auth.Method.OAuthAuth0.configuration Env.auth0AppClientId Env.auth0AppClientSecret Env.auth0AppTenant ]
     }
 
 
