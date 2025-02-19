@@ -35,3 +35,23 @@ type Mode
 
 mode =
     Development
+
+
+googleAppClientSecret : String
+googleAppClientSecret =
+    ""
+
+
+githubAppClientId : String
+githubAppClientId =
+    ""
+
+
+googleAppClientId : String
+googleAppClientId =
+    ""
+
+
+githubAppClientSecret : String
+githubAppClientSecret =
+    ""

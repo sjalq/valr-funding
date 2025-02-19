@@ -1,7 +1,9 @@
 module Types exposing (..)
 
+import Auth.Common
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
+import Dict exposing (Dict)
 import Http
 import Lamdera exposing (ClientId, SessionId)
 import Url exposing (Url)
@@ -48,11 +50,19 @@ type alias FrontendModel =
     { key : Key
     , currentRoute : Route
     , adminPage : AdminPageModel
+    , authFlow : Auth.Common.Flow
+    , authRedirectBaseUrl : Url
+    , login : LoginState
+    , currentUser : Maybe UserFrontend
     }
 
 
 type alias BackendModel =
-    { logs : List String }
+    { logs : List String
+    , pendingAuths : Dict Lamdera.SessionId Auth.Common.PendingAuth
+    , sessions : Dict Lamdera.SessionId Auth.Common.UserInfo
+    , users : Dict Email User
+    }
 
 
 type FrontendMsg
@@ -65,6 +75,8 @@ type FrontendMsg
     | Admin_PasswordOnChange String
     | Admin_SubmitPassword
     | Admin_RemoteUrlChanged String
+    | GoogleSigninRequested
+    | Logout
 
 
 type ToBackend
@@ -73,12 +85,16 @@ type ToBackend
     | Admin_ClearLogs
     | Admin_CheckPasswordBackend String
     | Admin_FetchRemoteModel String
+    | AuthToBackend Auth.Common.ToBackend
+    | GetUserToBackend
+    | LoggedOut
 
 
 type BackendMsg
     = NoOpBackendMsg
     | Log String
     | GotRemoteModel (Result Http.Error BackendModel)
+    | AuthBackendMsg Auth.Common.BackendMsg
 
 
 type ToFrontend
@@ -86,3 +102,26 @@ type ToFrontend
       -- Admin page
     | Admin_Logs_ToFrontend (List String)
     | Admin_LoginResponse Bool
+    | AuthToFrontend Auth.Common.ToFrontend
+    | AuthSuccess Auth.Common.UserInfo
+    | UserInfoMsg (Maybe Auth.Common.UserInfo)
+    | UserDataToFrontend UserFrontend
+
+
+type alias Email =
+    String
+
+
+type alias User =
+    { email : Email }
+
+
+type alias UserFrontend =
+    { email : Email }
+
+
+type LoginState
+    = JustArrived
+    | NotLogged Bool
+    | LoginTokenSent
+    | LoggedIn Auth.Common.UserInfo
