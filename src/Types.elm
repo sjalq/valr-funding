@@ -95,6 +95,7 @@ type BackendMsg
     | GotRemoteModel (Result Http.Error BackendModel)
     | AuthBackendMsg Auth.Common.BackendMsg
     | GotCryptoPriceResult PollingToken (Result Http.Error String)
+    | GotJobTime PollingToken Int
 
 
 type ToFrontend
@@ -150,6 +151,7 @@ type alias PollingToken =
 
 type PollingStatus a
     = Busy
+    | BusyWithTime Int -- Int now represents milliseconds since epoch
     | Ready (Result String a)
 
 

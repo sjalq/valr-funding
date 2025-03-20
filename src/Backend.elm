@@ -78,6 +78,14 @@ update msg model =
                     in
                     ( { model | pollingJobs = updatedPollingJobs }, Cmd.none )
                         |> log ("Failed to calculate crypto price: " ++ httpErrorToString err)
+                        
+        GotJobTime token timestamp ->
+            let
+                updatedPollingJobs =
+                    Dict.insert token (BusyWithTime timestamp) model.pollingJobs
+            in
+            ( { model | pollingJobs = updatedPollingJobs }, Cmd.none )
+                |> log ("Updated job " ++ token ++ " with timestamp: " ++ String.fromInt timestamp)
 
 
 updateFromFrontend : BrowserCookie -> ConnectionId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
