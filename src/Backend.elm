@@ -1,7 +1,7 @@
 module Backend exposing (..)
 
 import Auth.Flow
-import Dict 
+import Dict exposing (Dict)
 import Lamdera
 import RPC
 import Rights.Auth0 exposing (backendConfig)
@@ -22,7 +22,7 @@ app =
         { init = init
         , update = update
         , updateFromFrontend = updateFromFrontendCheckingRights
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = \m -> Sub.none
         }
 
 

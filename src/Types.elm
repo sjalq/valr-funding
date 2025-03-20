@@ -153,10 +153,5 @@ type PollingStatus a
     | Ready (Result String a)
 
 
-type alias PollingResponse a =
-    { status : PollingStatus a
-    }
-
-
 type alias PollData =
     String

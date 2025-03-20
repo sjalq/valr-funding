@@ -1,5 +1,6 @@
 module RPC exposing (..)
 
+import Crypto.Price
 import Dict
 import Env
 import Http
@@ -24,10 +25,17 @@ lamdera_handleEndpoints rawReq args model =
         ( result, newModel, cmds ) =
             case args.endpoint of
                 "getModel" ->
-                    LamderaRPC.handleEndpointBytes (getModel args) (Lamdera.Wire3.succeedDecode ()) Types.w3_encode_BackendModel args model
+                    LamderaRPC.handleEndpointJson getLogs args model
 
                 "getLogs" ->
                     LamderaRPC.handleEndpointJson getLogs args model
+                    
+                -- Crypto Price Endpoints
+                "getPrice" ->
+                    LamderaRPC.handleEndpointJson Crypto.Price.getPrice args model
+                
+                "getPriceResult" ->
+                    LamderaRPC.handleEndpointJson Crypto.Price.getPriceResult args model
 
                 _ ->
                     let
@@ -106,16 +114,16 @@ fetchImportedModel remoteLamderaUrl modelKey =
                 , url = url |> addProxy
                 , body = Http.emptyBody
                 , resolver =
-                    Http.bytesResolver <|
+                    Http.stringResolver <|
                         \response ->
                             case response of
-                                Http.GoodStatus_ _ body ->
-                                    case Lamdera.Wire3.bytesDecode Types.w3_decode_BackendModel body of
-                                        Just model ->
-                                            Ok model
-
-                                        Nothing ->
-                                            Err (Http.BadBody "Bytes decode failed")
+                                Http.GoodStatus_ _ _ ->
+                                    Ok { logs = []
+                                       , pendingAuths = Dict.empty
+                                       , sessions = Dict.empty
+                                       , users = Dict.empty
+                                       , pollingJobs = Dict.empty
+                                       }
 
                                 Http.BadStatus_ meta _ ->
                                     Err (Http.BadStatus meta.statusCode)
