@@ -1,18 +1,16 @@
 module Backend exposing (..)
 
-import Auth.Common
 import Auth.Flow
-import Auth.Method.EmailMagicLink
-import Auth.Method.OAuthGithub
-import Auth.Method.OAuthAuth0
-import Auth.Method.OAuthGoogle
 import Dict exposing (Dict)
-import Env
 import Lamdera
 import RPC
+import Rights.Auth0 exposing (backendConfig)
+import Rights.Permissions exposing (sessionCanPerformAction)
+import Rights.Role exposing (roleToString)
+import Rights.User exposing (createUser, getUserRole, insertUser, isSysAdmin)
 import Supplemental exposing (..)
 import Task
-import Time exposing (Posix)
+import Time
 import Types exposing (..)
 
 
@@ -24,7 +22,7 @@ app =
     Lamdera.backend
         { init = init
         , update = update
-        , updateFromFrontend = updateFromFrontend
+        , updateFromFrontend = updateFromFrontendCheckingRights
         , subscriptions = \m -> Sub.none
         }
 
@@ -71,58 +69,21 @@ updateFromFrontend browserCookie connectionId msg model =
             ( model, Cmd.none )
 
         Admin_FetchLogs ->
-            case Dict.get browserCookie model.sessions of
-                Just userInfo ->
-                    if userInfo.email == Env.sysAdminEmail then
-                        ( model, Lamdera.sendToFrontend connectionId (Admin_Logs_ToFrontend model.logs) )
-                    else
-                        ( model, Cmd.none )
-                Nothing ->
-                    ( model, Cmd.none )
+            ( model, Lamdera.sendToFrontend connectionId (Admin_Logs_ToFrontend model.logs) )
 
         Admin_ClearLogs ->
-            case Dict.get browserCookie model.sessions of
-                Just userInfo ->
-                    if userInfo.email == Env.sysAdminEmail then
-                        let
-                            newModel =
-                                { model | logs = [] }
-                        in
-                        ( newModel, Lamdera.sendToFrontend connectionId (Admin_Logs_ToFrontend newModel.logs) )
-                    else
-                        ( model, Cmd.none )
-                Nothing ->
-                    ( model, Cmd.none )
-
-        Admin_CheckPasswordBackend password ->
-            ( model
-            , case Dict.get browserCookie model.sessions of
-                Just userInfo ->
-                    -- Check if the logged in user is the sys admin
-                    if userInfo.email == Env.sysAdminEmail then
-                        Lamdera.sendToFrontend connectionId (Admin_LoginResponse True)
-                    else
-                        Lamdera.sendToFrontend connectionId (Admin_LoginResponse False)
-                
-                Nothing ->
-                    -- Not logged in at all
-                    Lamdera.sendToFrontend connectionId (Admin_LoginResponse False)
-            )
+            let
+                newModel =
+                    { model | logs = [] }
+            in
+            ( newModel, Lamdera.sendToFrontend connectionId (Admin_Logs_ToFrontend newModel.logs) )
 
         Admin_FetchRemoteModel remoteUrl ->
-            -- Check if user is admin before fetching remote model
-            case Dict.get browserCookie model.sessions of
-                Just userInfo ->
-                    if userInfo.email == Env.sysAdminEmail then
-                        ( model
-                          -- put your production model key in here to fetch from your prod env.
-                        , RPC.fetchImportedModel remoteUrl "1234567890"
-                            |> Task.attempt GotRemoteModel
-                        )
-                    else
-                        ( model, Cmd.none ) -- User is not admin
-                Nothing ->
-                    ( model, Cmd.none ) -- Not logged in
+            ( model
+              -- put your production model key in here to fetch from your prod env.
+            , RPC.fetchImportedModel remoteUrl "1234567890"
+                |> Task.attempt GotRemoteModel
+            )
 
         AuthToBackend authToBackend ->
             let
@@ -155,72 +116,40 @@ updateFromFrontend browserCookie connectionId msg model =
             ( { model | sessions = Dict.remove browserCookie model.sessions }, Cmd.none )
 
 
+updateFromFrontendCheckingRights : BrowserCookie -> ConnectionId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
+updateFromFrontendCheckingRights browserCookie connectionId msg model =
+    -- Check permission first before processing the message
+    if
+        case msg of
+            NoOpToBackend ->
+                True
+                
+            LoggedOut ->
+                True
+                
+            AuthToBackend _ ->
+                True
+
+            GetUserToBackend ->
+                True
+
+            _ ->
+                sessionCanPerformAction model browserCookie msg
+    then
+        -- User has permission, process the message
+        updateFromFrontend browserCookie connectionId msg model
+    else
+        -- User doesn't have permission, send PermissionDenied message
+        ( model, Lamdera.sendToFrontend connectionId (PermissionDenied msg) )
+
+
 log =
     Supplemental.log NoOpBackendMsg
 
 
-renewSession : Lamdera.SessionId -> Lamdera.ClientId -> BackendModel -> ( BackendModel, Cmd BackendMsg )
-renewSession _ _ model =
-    ( model, Cmd.none )
-
-
-handleAuthSuccess : BackendModel -> Lamdera.SessionId -> Lamdera.ClientId -> Auth.Common.UserInfo -> Auth.Common.MethodId -> Maybe Auth.Common.Token -> Time.Posix -> ( BackendModel, Cmd BackendMsg )
-handleAuthSuccess backendModel sessionId clientId userInfo _ _ _ =
-    let
-        sessionsWithOutThisOne : Dict Lamdera.SessionId Auth.Common.UserInfo
-        sessionsWithOutThisOne =
-            Dict.filter (\_ { email } -> email /= userInfo.email) backendModel.sessions
-
-        newSessions =
-            Dict.insert sessionId userInfo sessionsWithOutThisOne
-
-        response =
-            AuthSuccess userInfo
-    in
-    ( { backendModel | sessions = newSessions }, Cmd.batch [ Lamdera.sendToFrontend clientId response ] )
-
-
-logout : Lamdera.SessionId -> Lamdera.ClientId -> BackendModel -> ( BackendModel, Cmd msg )
-logout sessionId _ model =
-    ( { model | sessions = model.sessions |> Dict.remove sessionId }, Cmd.none )
-
-
-backendConfig : BackendModel -> Auth.Flow.BackendUpdateConfig FrontendMsg BackendMsg ToFrontend FrontendModel BackendModel
-backendConfig model =
-    { asToFrontend = AuthToFrontend
-    , asBackendMsg = AuthBackendMsg
-    , sendToFrontend = Lamdera.sendToFrontend
-    , backendModel = model
-    , loadMethod = Auth.Flow.methodLoader config.methods
-    , handleAuthSuccess = handleAuthSuccess model
-    , isDev = True
-    , renewSession = renewSession
-    , logout = logout
-    }
-
-
-config : Auth.Common.Config FrontendMsg ToBackend BackendMsg ToFrontend FrontendModel BackendModel
-config =
-    { toBackend = AuthToBackend
-    , toFrontend = AuthToFrontend
-    , backendMsg = AuthBackendMsg
-    , sendToFrontend = Lamdera.sendToFrontend
-    , sendToBackend = Lamdera.sendToBackend
-    , renewSession = renewSession
-    , methods = [ Auth.Method.OAuthGoogle.configuration Env.googleAppClientId Env.googleAppClientSecret, Auth.Method.OAuthAuth0.configuration Env.auth0AppClientId Env.auth0AppClientSecret Env.auth0AppTenant ]
-    }
-
-
-createUser : Auth.Common.UserInfo -> User
-createUser userInfo =
-    { email = userInfo.email }
-
-
 userToFrontend : User -> UserFrontend
 userToFrontend user =
-    { email = user.email }
-
-
-insertUser : Email -> User -> BackendModel -> BackendModel
-insertUser email newUser model =
-    { model | users = Dict.insert email newUser model.users }
+    { email = user.email
+    , isSysAdmin = isSysAdmin user
+    , role = getUserRole user |> roleToString
+    }

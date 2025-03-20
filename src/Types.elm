@@ -5,7 +5,7 @@ import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
 import Http
-import Lamdera exposing (ClientId, SessionId)
+import Lamdera
 import Url exposing (Url)
 
 
@@ -41,7 +41,6 @@ type AdminRoute
 type alias AdminPageModel =
     { logs : List String
     , isAuthenticated : Bool
-    , password : String
     , remoteUrl : String
     }
 
@@ -73,8 +72,6 @@ type FrontendMsg
     | NoOpFrontendMsg
     | DirectToBackend ToBackend
       --- Admin
-    | Admin_PasswordOnChange String
-    | Admin_SubmitPassword
     | Admin_RemoteUrlChanged String
     | GoogleSigninRequested
     | Auth0SigninRequested
@@ -85,7 +82,6 @@ type ToBackend
     = NoOpToBackend
     | Admin_FetchLogs
     | Admin_ClearLogs
-    | Admin_CheckPasswordBackend String
     | Admin_FetchRemoteModel String
     | AuthToBackend Auth.Common.ToBackend
     | GetUserToBackend
@@ -103,11 +99,11 @@ type ToFrontend
     = NoOpToFrontend
       -- Admin page
     | Admin_Logs_ToFrontend (List String)
-    | Admin_LoginResponse Bool
     | AuthToFrontend Auth.Common.ToFrontend
     | AuthSuccess Auth.Common.UserInfo
     | UserInfoMsg (Maybe Auth.Common.UserInfo)
     | UserDataToFrontend UserFrontend
+    | PermissionDenied ToBackend
 
 
 type alias Email =
@@ -115,11 +111,15 @@ type alias Email =
 
 
 type alias User =
-    { email : Email }
+    { email : Email
+    }
 
 
 type alias UserFrontend =
-    { email : Email }
+    { email : Email
+    , isSysAdmin : Bool
+    , role : String
+    }
 
 
 type LoginState
@@ -127,3 +127,13 @@ type LoginState
     | NotLogged Bool
     | LoginTokenSent
     | LoggedIn Auth.Common.UserInfo
+
+
+
+-- Role types
+
+
+type Role
+    = SysAdmin
+    | UserRole
+    | Anonymous

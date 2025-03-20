@@ -13,22 +13,53 @@ viewTabs : FrontendModel -> Html FrontendMsg
 viewTabs model =
     div [ Attr.class "flex justify-between mb-5 px-4" ]
         [ div [ Attr.class "flex" ]
-            [ viewTab "Default" Default model.currentRoute
-            , viewTab "Admin" (Admin AdminDefault) model.currentRoute
-            ]
+            (viewTab "Default" Default model.currentRoute
+                :: (case model.currentUser of
+                        Just user ->
+                            if user.isSysAdmin then
+                                [ viewTab "Admin" (Admin AdminDefault) model.currentRoute ]
+
+                            else
+                                []
+
+                        Nothing ->
+                            []
+                   )
+            )
         , div [ Attr.class "flex items-center" ]
             [ case model.login of
                 LoggedIn userInfo ->
                     div [ Attr.class "flex items-center" ]
-                        [ span [ Attr.class "mr-2 text-gray-600" ] 
-                            [ text userInfo.email ] 
+                        [ span [ Attr.class "mr-2 text-gray-600" ]
+                            [ text userInfo.email ]
                         , button
                             [ onClick Logout
                             , Attr.class "px-4 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                             ]
                             [ text "Logout" ]
                         ]
-                _ ->
+
+                LoginTokenSent ->
+                    div [ Attr.class "flex items-center" ]
+                        [ span [ Attr.class "mr-2 text-gray-600 animate-pulse" ]
+                            [ text "Authenticating..." ]
+                        ]
+
+                NotLogged pendingAuth ->
+                    if pendingAuth then
+                        button
+                            [ Attr.disabled True
+                            , Attr.class "px-4 py-1 bg-blue-400 text-white rounded cursor-wait"
+                            ]
+                            [ text "Authenticating..." ]
+                    else
+                        button
+                            [ onClick Auth0SigninRequested
+                            , Attr.class "px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            ]
+                            [ text "Login" ]
+
+                JustArrived ->
                     button
                         [ onClick Auth0SigninRequested
                         , Attr.class "px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -57,7 +88,7 @@ viewCurrentPage model =
         Default ->
             Pages.Default.view model
 
-        Admin adminRoute ->
+        Admin _ ->
             Pages.Admin.view model
 
         NotFound ->

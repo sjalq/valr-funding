@@ -41,7 +41,7 @@ responseStringToResult response =
         Http.BadStatus_ metadata body ->
             Err (Http.BadStatus metadata.statusCode)
 
-        Http.GoodStatus_ metadata body ->
+        Http.GoodStatus_ _ body ->
             Ok body
 
 
@@ -116,9 +116,8 @@ log noop logMsg ( model, cmd ) =
         logSize =
             Env.logSize |> String.toInt |> Maybe.withDefault 2000
 
-        x =
-            Time.now
-
+        -- x =
+        --     Time.now
         model_ =
             { model | logs = logMsg :: model.logs |> List.take logSize }
 

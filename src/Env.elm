@@ -28,34 +28,6 @@ stillTesting =
     "1"
 
 
-type Mode
-    = Development
-    | Production
-
-
-mode =
-    Development
-
-
-googleAppClientSecret : String
-googleAppClientSecret =
-    ""
-
-
-githubAppClientId : String
-githubAppClientId =
-    ""
-
-
-googleAppClientId : String
-googleAppClientId =
-    ""
-
-
-githubAppClientSecret : String
-githubAppClientSecret =
-    ""
-
 auth0AppClientId : String
 auth0AppClientId =
     "qqkzut4gKyC6Y2lB3nlPsOBwnLmTQxfx"
@@ -70,6 +42,16 @@ auth0AppTenant : String
 auth0AppTenant =
     "dev-ioeftjgqbnfyd4lp.us.auth0.com"
 
+
 sysAdminEmail : String
 sysAdminEmail =
-    "" -- Replace with the email of the system administrator 
+    "schalk.dormehl@gmail.com"
+
+
+type Mode
+    = Development
+    | Production
+
+
+mode =
+    Development

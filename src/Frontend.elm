@@ -23,6 +23,7 @@ type alias Model =
     FrontendModel
 
 
+
 -- app =
 --     Lamdera.frontend
 --         { init = initWithAuth
@@ -66,7 +67,6 @@ init url key =
             , adminPage =
                 { logs = []
                 , isAuthenticated = False
-                , password = ""
                 , remoteUrl = ""
                 }
             , authFlow = Auth.Common.Idle
@@ -132,16 +132,6 @@ update msg model =
         DirectToBackend msg_ ->
             ( model, Lamdera.sendToBackend msg_ )
 
-        Admin_PasswordOnChange password ->
-            let
-                oldAdminPage =
-                    model.adminPage
-            in
-            ( { model | adminPage = { oldAdminPage | password = password } }, Cmd.none )
-
-        Admin_SubmitPassword ->
-            ( model, Lamdera.sendToBackend (Admin_CheckPasswordBackend model.adminPage.password) )
-
         Admin_RemoteUrlChanged url ->
             let
                 oldAdminPage =
@@ -156,7 +146,7 @@ update msg model =
 
         Logout ->
             ( { model | login = NotLogged False, pendingAuth = False }, Lamdera.sendToBackend LoggedOut )
-               
+
         Auth0SigninRequested ->
             Auth.Flow.signInRequested "OAuthAuth0" { model | login = NotLogged True, pendingAuth = True } Nothing
                 |> Tuple.mapSecond (AuthToBackend >> Lamdera.sendToBackend)
@@ -176,13 +166,6 @@ updateFromBackend msg model =
             in
             ( { model | adminPage = { oldAdminPage | logs = logs } }, Cmd.none )
 
-        Admin_LoginResponse isAuthenticated ->
-            let
-                oldAdminPage =
-                    model.adminPage
-            in
-            ( { model | adminPage = { oldAdminPage | isAuthenticated = isAuthenticated } }, Cmd.none )
-
         AuthToFrontend authToFrontendMsg ->
             authUpdateFromBackend authToFrontendMsg model
 
@@ -199,6 +182,10 @@ updateFromBackend msg model =
 
         UserDataToFrontend currentUser ->
             ( { model | currentUser = Just currentUser }, Cmd.none )
+
+        PermissionDenied _ ->
+            -- Simply ignore the denied action without any UI notification
+            ( model, Cmd.none )
 
 
 view : Model -> Browser.Document FrontendMsg
@@ -268,28 +255,28 @@ viewWithAuth : Model -> Browser.Document FrontendMsg
 viewWithAuth model =
     { title = "View Auth Test"
     , body =
-        [ div 
+        [ div
             [ style "margin" "20px"
             , style "font-family" "Arial, sans-serif"
-            ] 
-            [ h1 
-                [ style "color" "#333" ] 
+            ]
+            [ h1
+                [ style "color" "#333" ]
                 [ text "Auth0 Test" ]
             , case model.login of
                 LoggedIn userInfo ->
-                    div 
+                    div
                         [ style "padding" "20px"
                         , style "border" "1px solid #ccc"
                         , style "border-radius" "5px"
                         , style "background-color" "#f8f8f8"
                         , style "max-width" "400px"
-                        ] 
-                        [ div 
+                        ]
+                        [ div
                             [ style "margin-bottom" "15px"
-                            , style "font-size" "16px" 
-                            ] 
+                            , style "font-size" "16px"
+                            ]
                             [ text ("👤 Logged in as: " ++ userInfo.email) ]
-                        , button 
+                        , button
                             [ HE.onClick Logout
                             , style "background-color" "#f44336"
                             , style "color" "white"
@@ -297,10 +284,10 @@ viewWithAuth model =
                             , style "border" "none"
                             , style "border-radius" "4px"
                             , style "cursor" "pointer"
-                            ] 
+                            ]
                             [ text "Logout" ]
                         ]
-                        
+
                 _ ->
                     div
                         [ style "padding" "20px"
@@ -309,11 +296,11 @@ viewWithAuth model =
                         , style "background-color" "#f8f8f8"
                         , style "max-width" "400px"
                         ]
-                        [ p 
-                            [ style "margin-bottom" "15px" ] 
+                        [ p
+                            [ style "margin-bottom" "15px" ]
                             [ text "Please sign in to continue" ]
                         , button
-                            [ HE.onClick Auth0SigninRequested 
+                            [ HE.onClick Auth0SigninRequested
                             , style "background-color" "#4CAF50"
                             , style "color" "white"
                             , style "padding" "10px 15px"
@@ -334,17 +321,20 @@ authUpdateFromBackend authToFrontendMsg model =
         Auth.Common.AuthInitiateSignin url ->
             if model.pendingAuth then
                 let
-                    (newModel, cmd) = Auth.Flow.startProviderSignin url model
+                    ( newModel, cmd ) =
+                        Auth.Flow.startProviderSignin url model
                 in
-                ( { newModel | pendingAuth = False }, cmd )
+                ( { newModel | pendingAuth = False, login = LoginTokenSent }, cmd )
+
             else
                 ( model, Cmd.none )
 
         Auth.Common.AuthError err ->
             let
-                (newModel, cmd) = Auth.Flow.setError model err
+                ( newModel, cmd ) =
+                    Auth.Flow.setError model err
             in
-            ( { newModel | pendingAuth = False }, cmd )
+            ( { newModel | pendingAuth = False, login = NotLogged False }, cmd )
 
         Auth.Common.AuthSessionChallenge _ ->
             ( model, Cmd.none )
