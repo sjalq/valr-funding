@@ -62,6 +62,7 @@ type alias BackendModel =
     , pendingAuths : Dict Lamdera.SessionId Auth.Common.PendingAuth
     , sessions : Dict Lamdera.SessionId Auth.Common.UserInfo
     , users : Dict Email User
+    , pollingJobs : Dict PollingToken (PollingStatus PollData)
     }
 
 
@@ -93,6 +94,7 @@ type BackendMsg
     | Log String
     | GotRemoteModel (Result Http.Error BackendModel)
     | AuthBackendMsg Auth.Common.BackendMsg
+    | GotCryptoPriceResult PollingToken (Result Http.Error String)
 
 
 type ToFrontend
@@ -137,3 +139,24 @@ type Role
     = SysAdmin
     | UserRole
     | Anonymous
+
+
+-- Polling types
+
+
+type alias PollingToken =
+    String
+
+
+type PollingStatus a
+    = Busy
+    | Ready (Result String a)
+
+
+type alias PollingResponse a =
+    { status : PollingStatus a
+    }
+
+
+type alias PollData =
+    String

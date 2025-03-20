@@ -42,6 +42,12 @@ lamdera_handleEndpoints rawReq args model =
 
         "getLogs" ->
             ( result, newModel, cmds )
+            
+        "getPrice" ->
+            ( result, newModel, cmds ) |> rpcLog (encodeRPCCallAndResult args result)
+            
+        "getPriceResult" ->
+            ( result, newModel, cmds ) |> rpcLog (encodeRPCCallAndResult args result)
 
         _ ->
             ( result, newModel, cmds ) |> rpcLog (encodeRPCCallAndResult args result)

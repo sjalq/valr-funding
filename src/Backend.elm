@@ -33,6 +33,7 @@ init =
       , pendingAuths = Dict.empty
       , sessions = Dict.empty
       , users = Dict.empty
+      , pollingJobs = Dict.empty
       }
     , Cmd.none
     )
@@ -60,6 +61,24 @@ update msg model =
 
         AuthBackendMsg authMsg ->
             Auth.Flow.backendUpdate (backendConfig model) authMsg
+            
+        GotCryptoPriceResult token result ->
+            case result of
+                Ok priceStr ->
+                    let
+                        updatedPollingJobs =
+                            Dict.insert token (Ready (Ok priceStr)) model.pollingJobs
+                    in
+                    ( { model | pollingJobs = updatedPollingJobs }, Cmd.none )
+                        |> log ("Crypto price calculated: " ++ priceStr)
+                        
+                Err err ->
+                    let
+                        updatedPollingJobs =
+                            Dict.insert token (Ready (Err (httpErrorToString err))) model.pollingJobs
+                    in
+                    ( { model | pollingJobs = updatedPollingJobs }, Cmd.none )
+                        |> log ("Failed to calculate crypto price: " ++ httpErrorToString err)
 
 
 updateFromFrontend : BrowserCookie -> ConnectionId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
