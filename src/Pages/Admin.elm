@@ -11,6 +11,7 @@ import Types exposing (..)
 init : FrontendModel -> AdminRoute -> ( FrontendModel, Cmd FrontendMsg )
 init model adminRoute =
     if Env.stillTesting == "1" then
+        -- Testing mode, allow admin access
         ( { model
             | adminPage =
                 { isAuthenticated = True
@@ -26,30 +27,67 @@ init model adminRoute =
             _ ->
                 Cmd.none
         )
-
     else
-        case ( model.adminPage.isAuthenticated, adminRoute ) of
-            ( True, AdminLogs ) ->
-                ( model, Lamdera.sendToBackend Admin_FetchLogs )
+        -- First check if user is logged in with Auth0 and has admin privileges
+        case model.login of
+            LoggedIn userInfo ->
+                if userInfo.email == Env.sysAdminEmail || model.adminPage.isAuthenticated then
+                    -- Allow admin access
+                    case adminRoute of
+                        AdminLogs ->
+                            ( model, Lamdera.sendToBackend Admin_FetchLogs )
 
+                        _ ->
+                            ( model, Cmd.none )
+                else
+                    -- Logged in but not admin
+                    ( model, Cmd.none )
+            
             _ ->
+                -- Not logged in
                 ( model, Cmd.none )
 
 
 view : FrontendModel -> Html FrontendMsg
 view model =
-    if not model.adminPage.isAuthenticated then
-        viewLogin model
+    -- Check if user is logged in and has admin permissions
+    case model.login of
+        LoggedIn userInfo ->
+            if userInfo.email == Env.sysAdminEmail || model.adminPage.isAuthenticated then
+                div [ Attr.class "bg-gray-100 min-h-screen" ]
+                    [ div [ Attr.class "container mx-auto px-4 py-8" ]
+                        [ h1 [ Attr.class "text-3xl font-bold mb-4" ]
+                            [ text "Admin Page" ]
+                        , viewTabs model
+                        , viewTabContent model
+                        ]
+                    ]
+            else
+                viewNoAccess model
 
-    else
-        div [ Attr.class "bg-gray-100 min-h-screen" ]
-            [ div [ Attr.class "container mx-auto px-4 py-8" ]
-                [ h1 [ Attr.class "text-3xl font-bold mb-4" ]
-                    [ text "Admin Page" ]
-                , viewTabs model
-                , viewTabContent model
+        _ ->
+            viewLogin model
+
+
+viewNoAccess : FrontendModel -> Html FrontendMsg
+viewNoAccess model =
+    div [ Attr.class "min-h-screen flex items-center justify-center bg-gray-100" ]
+        [ div [ Attr.class "bg-white p-8 rounded-lg shadow-md w-96" ]
+            [ h2 [ Attr.class "text-2xl font-bold mb-4" ] [ text "Access Denied" ]
+            , p [ Attr.class "text-red-600 mb-4" ] 
+                [ text "Your account does not have administrative privileges." ]
+            , button
+                [ onClick Logout
+                , Attr.class "w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 mb-2"
                 ]
+                [ text "Logout" ]
+            , a
+                [ Attr.href "/"
+                , Attr.class "block text-center text-blue-500 hover:underline"
+                ]
+                [ text "Return to Home" ]
             ]
+        ]
 
 
 viewTabs : FrontendModel -> Html FrontendMsg
@@ -186,18 +224,30 @@ viewLogin model =
     div [ Attr.class "min-h-screen flex items-center justify-center bg-gray-100" ]
         [ div [ Attr.class "bg-white p-8 rounded-lg shadow-md w-96" ]
             [ h2 [ Attr.class "text-2xl font-bold mb-4" ] [ text "Admin Login" ]
-            , input
-                [ Attr.type_ "password"
-                , Attr.placeholder "Enter admin password"
-                , Attr.value model.adminPage.password
-                , Html.Events.onInput Admin_PasswordOnChange
-                , Attr.class "w-full px-3 py-2 border rounded mb-4"
-                ]
-                []
-            , button
-                [ onClick Admin_SubmitPassword
-                , Attr.class "w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-                ]
-                [ text "Login" ]
+            , p [ Attr.class "mb-4 text-gray-600" ] 
+                [ text "Please sign in with Auth0 using your admin email account to access the admin area." ]
+            , case model.login of
+                LoggedIn userInfo ->
+                    if userInfo.email == Env.sysAdminEmail then
+                        div [ Attr.class "text-center" ]
+                            [ p [ Attr.class "text-green-600 mb-4" ] 
+                                [ text "You are logged in with admin privileges" ]
+                            , button
+                                [ onClick Admin_SubmitPassword
+                                , Attr.class "w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+                                ]
+                                [ text "Continue to Admin" ]
+                            ]
+                    else
+                        div [ Attr.class "text-center" ]
+                            [ p [ Attr.class "text-red-600 mb-4" ] 
+                                [ text "Your account does not have admin privileges" ]
+                            ]
+                _ ->
+                    button
+                        [ onClick Auth0SigninRequested
+                        , Attr.class "w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+                        ]
+                        [ text "Login with Auth0" ]
             ]
         ]

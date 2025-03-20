@@ -71,30 +71,58 @@ updateFromFrontend browserCookie connectionId msg model =
             ( model, Cmd.none )
 
         Admin_FetchLogs ->
-            ( model, Lamdera.sendToFrontend connectionId (Admin_Logs_ToFrontend model.logs) )
+            case Dict.get browserCookie model.sessions of
+                Just userInfo ->
+                    if userInfo.email == Env.sysAdminEmail then
+                        ( model, Lamdera.sendToFrontend connectionId (Admin_Logs_ToFrontend model.logs) )
+                    else
+                        ( model, Cmd.none )
+                Nothing ->
+                    ( model, Cmd.none )
 
         Admin_ClearLogs ->
-            let
-                newModel =
-                    { model | logs = [] }
-            in
-            ( newModel, Lamdera.sendToFrontend connectionId (Admin_Logs_ToFrontend newModel.logs) )
+            case Dict.get browserCookie model.sessions of
+                Just userInfo ->
+                    if userInfo.email == Env.sysAdminEmail then
+                        let
+                            newModel =
+                                { model | logs = [] }
+                        in
+                        ( newModel, Lamdera.sendToFrontend connectionId (Admin_Logs_ToFrontend newModel.logs) )
+                    else
+                        ( model, Cmd.none )
+                Nothing ->
+                    ( model, Cmd.none )
 
         Admin_CheckPasswordBackend password ->
             ( model
-            , if password == Env.modelKey then
-                Lamdera.sendToFrontend connectionId (Admin_LoginResponse True)
-
-              else
-                Lamdera.sendToFrontend connectionId (Admin_LoginResponse False)
+            , case Dict.get browserCookie model.sessions of
+                Just userInfo ->
+                    -- Check if the logged in user is the sys admin
+                    if userInfo.email == Env.sysAdminEmail then
+                        Lamdera.sendToFrontend connectionId (Admin_LoginResponse True)
+                    else
+                        Lamdera.sendToFrontend connectionId (Admin_LoginResponse False)
+                
+                Nothing ->
+                    -- Not logged in at all
+                    Lamdera.sendToFrontend connectionId (Admin_LoginResponse False)
             )
 
         Admin_FetchRemoteModel remoteUrl ->
-            ( model
-              -- put your production model key in here to fetch from your prod env.
-            , RPC.fetchImportedModel remoteUrl "1234567890"
-                |> Task.attempt GotRemoteModel
-            )
+            -- Check if user is admin before fetching remote model
+            case Dict.get browserCookie model.sessions of
+                Just userInfo ->
+                    if userInfo.email == Env.sysAdminEmail then
+                        ( model
+                          -- put your production model key in here to fetch from your prod env.
+                        , RPC.fetchImportedModel remoteUrl "1234567890"
+                            |> Task.attempt GotRemoteModel
+                        )
+                    else
+                        ( model, Cmd.none ) -- User is not admin
+                Nothing ->
+                    ( model, Cmd.none ) -- Not logged in
 
         AuthToBackend authToBackend ->
             let

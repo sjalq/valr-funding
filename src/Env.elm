@@ -58,14 +58,18 @@ githubAppClientSecret =
 
 auth0AppClientId : String
 auth0AppClientId =
-    ""  -- Replace with your actual Client ID
+    "qqkzut4gKyC6Y2lB3nlPsOBwnLmTQxfx"
 
 
 auth0AppClientSecret : String
 auth0AppClientSecret =
-    ""  -- Replace with your actual Client Secret
+    "-2bRUV-1JXwO9sqCuTdKziBYG1Rn83bfRvB9LPBqsp5yFcVClx19G-6dI0XtDmEU"
 
 
 auth0AppTenant : String
 auth0AppTenant =
-    "" -- Replace with tenant, e.g., "your-domain.auth0.com" 
+    "dev-ioeftjgqbnfyd4lp.us.auth0.com"
+
+sysAdminEmail : String
+sysAdminEmail =
+    "" -- Replace with the email of the system administrator 

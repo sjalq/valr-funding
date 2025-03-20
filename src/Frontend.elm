@@ -6,6 +6,7 @@ import Auth.Method.OAuthGoogle
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Html exposing (..)
+import Html.Attributes exposing (style)
 import Html.Events as HE
 import Lamdera
 import Pages.Admin
@@ -44,7 +45,7 @@ app =
         , update = update
         , updateFromBackend = updateFromBackend
         , subscriptions = always Sub.none
-        , view = viewWithAuth
+        , view = view
         }
 
 
@@ -72,6 +73,7 @@ init url key =
             , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
             , login = NotLogged False
             , currentUser = Nothing
+            , pendingAuth = False
             }
     in
     inits model route
@@ -149,14 +151,14 @@ update msg model =
 
         GoogleSigninRequested ->
             --Auth.Flow.signInRequested "OAuthGoogle" { model | login = NotLogged True } Nothing
-            Auth.Flow.signInRequested "OAuthGoogle" { model | login = NotLogged True } Nothing
+            Auth.Flow.signInRequested "OAuthGoogle" { model | login = NotLogged True, pendingAuth = True } Nothing
                 |> Tuple.mapSecond (AuthToBackend >> Lamdera.sendToBackend)
 
         Logout ->
-            ( { model | login = NotLogged False }, Lamdera.sendToBackend LoggedOut )
+            ( { model | login = NotLogged False, pendingAuth = False }, Lamdera.sendToBackend LoggedOut )
                
         Auth0SigninRequested ->
-            Auth.Flow.signInRequested "OAuthAuth0" { model | login = NotLogged True } Nothing
+            Auth.Flow.signInRequested "OAuthAuth0" { model | login = NotLogged True, pendingAuth = True } Nothing
                 |> Tuple.mapSecond (AuthToBackend >> Lamdera.sendToBackend)
 
 
@@ -185,15 +187,15 @@ updateFromBackend msg model =
             authUpdateFromBackend authToFrontendMsg model
 
         AuthSuccess userInfo ->
-            ( { model | login = LoggedIn userInfo }, Cmd.batch [ Nav.pushUrl model.key "/", Lamdera.sendToBackend GetUserToBackend ] )
+            ( { model | login = LoggedIn userInfo, pendingAuth = False }, Cmd.batch [ Nav.pushUrl model.key "/", Lamdera.sendToBackend GetUserToBackend ] )
 
         UserInfoMsg mUserinfo ->
             case mUserinfo of
                 Just userInfo ->
-                    ( { model | login = LoggedIn userInfo }, Cmd.none )
+                    ( { model | login = LoggedIn userInfo, pendingAuth = False }, Cmd.none )
 
                 Nothing ->
-                    ( { model | login = NotLogged False }, Cmd.none )
+                    ( { model | login = NotLogged False, pendingAuth = False }, Cmd.none )
 
         UserDataToFrontend currentUser ->
             ( { model | currentUser = Just currentUser }, Cmd.none )
@@ -266,9 +268,62 @@ viewWithAuth : Model -> Browser.Document FrontendMsg
 viewWithAuth model =
     { title = "View Auth Test"
     , body =
-        [ Html.button
-            [ HE.onClick Auth0SigninRequested ]
-            [ Html.text "Sign in with Auth0" ]
+        [ div 
+            [ style "margin" "20px"
+            , style "font-family" "Arial, sans-serif"
+            ] 
+            [ h1 
+                [ style "color" "#333" ] 
+                [ text "Auth0 Test" ]
+            , case model.login of
+                LoggedIn userInfo ->
+                    div 
+                        [ style "padding" "20px"
+                        , style "border" "1px solid #ccc"
+                        , style "border-radius" "5px"
+                        , style "background-color" "#f8f8f8"
+                        , style "max-width" "400px"
+                        ] 
+                        [ div 
+                            [ style "margin-bottom" "15px"
+                            , style "font-size" "16px" 
+                            ] 
+                            [ text ("👤 Logged in as: " ++ userInfo.email) ]
+                        , button 
+                            [ HE.onClick Logout
+                            , style "background-color" "#f44336"
+                            , style "color" "white"
+                            , style "padding" "10px 15px"
+                            , style "border" "none"
+                            , style "border-radius" "4px"
+                            , style "cursor" "pointer"
+                            ] 
+                            [ text "Logout" ]
+                        ]
+                        
+                _ ->
+                    div
+                        [ style "padding" "20px"
+                        , style "border" "1px solid #ccc"
+                        , style "border-radius" "5px"
+                        , style "background-color" "#f8f8f8"
+                        , style "max-width" "400px"
+                        ]
+                        [ p 
+                            [ style "margin-bottom" "15px" ] 
+                            [ text "Please sign in to continue" ]
+                        , button
+                            [ HE.onClick Auth0SigninRequested 
+                            , style "background-color" "#4CAF50"
+                            , style "color" "white"
+                            , style "padding" "10px 15px"
+                            , style "border" "none"
+                            , style "border-radius" "4px"
+                            , style "cursor" "pointer"
+                            ]
+                            [ text "Sign in with Auth0" ]
+                        ]
+            ]
         ]
     }
 
@@ -277,10 +332,19 @@ authUpdateFromBackend : Auth.Common.ToFrontend -> FrontendModel -> ( FrontendMod
 authUpdateFromBackend authToFrontendMsg model =
     case authToFrontendMsg of
         Auth.Common.AuthInitiateSignin url ->
-            Auth.Flow.startProviderSignin url model
+            if model.pendingAuth then
+                let
+                    (newModel, cmd) = Auth.Flow.startProviderSignin url model
+                in
+                ( { newModel | pendingAuth = False }, cmd )
+            else
+                ( model, Cmd.none )
 
         Auth.Common.AuthError err ->
-            Auth.Flow.setError model err
+            let
+                (newModel, cmd) = Auth.Flow.setError model err
+            in
+            ( { newModel | pendingAuth = False }, cmd )
 
         Auth.Common.AuthSessionChallenge _ ->
             ( model, Cmd.none )

@@ -54,6 +54,7 @@ type alias FrontendModel =
     , authRedirectBaseUrl : Url
     , login : LoginState
     , currentUser : Maybe UserFrontend
+    , pendingAuth : Bool
     }
 
 
