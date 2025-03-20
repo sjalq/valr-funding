@@ -2,7 +2,6 @@ module Frontend exposing (..)
 
 import Auth.Common
 import Auth.Flow
-import Auth.Method.OAuthGoogle
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Html exposing (..)

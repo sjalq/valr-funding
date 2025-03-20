@@ -8,7 +8,6 @@ import Env
 import Lamdera
 import Time
 import Types exposing (..)
-import Url exposing (Url)
 
 
 renewSession : Lamdera.SessionId -> Lamdera.ClientId -> BackendModel -> ( BackendModel, Cmd BackendMsg )

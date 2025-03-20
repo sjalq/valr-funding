@@ -1,7 +1,7 @@
 module Backend exposing (..)
 
 import Auth.Flow
-import Dict exposing (Dict)
+import Dict 
 import Lamdera
 import RPC
 import Rights.Auth0 exposing (backendConfig)
@@ -10,7 +10,6 @@ import Rights.Role exposing (roleToString)
 import Rights.User exposing (createUser, getUserRole, insertUser, isSysAdmin)
 import Supplemental exposing (..)
 import Task
-import Time
 import Types exposing (..)
 
 
@@ -23,7 +22,7 @@ app =
         { init = init
         , update = update
         , updateFromFrontend = updateFromFrontendCheckingRights
-        , subscriptions = \m -> Sub.none
+        , subscriptions = \_ -> Sub.none
         }
 
 
