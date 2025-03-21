@@ -151,7 +151,7 @@ type alias PollingToken =
 
 type PollingStatus a
     = Busy
-    | BusyWithTime Int -- Int now represents milliseconds since epoch
+    | BusyWithTime Int 
     | Ready (Result String a)
 
 
