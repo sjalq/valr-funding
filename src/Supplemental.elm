@@ -11,7 +11,6 @@ import Time
 
 
 
---import Types exposing (BackendMsg(..))
 {-
    HTTP helpers
 -}
