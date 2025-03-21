@@ -7,6 +7,8 @@ import Dict exposing (Dict)
 import Http
 import Lamdera
 import Url exposing (Url)
+import Fusion.Patch
+import Fusion
 
 
 
@@ -54,6 +56,7 @@ type alias FrontendModel =
     , login : LoginState
     , currentUser : Maybe UserFrontend
     , pendingAuth : Bool
+    , fusionState : Fusion.Value
     }
 
 
@@ -72,11 +75,14 @@ type FrontendMsg
     | UrlRequested UrlRequest
     | NoOpFrontendMsg
     | DirectToBackend ToBackend
-      --- Admin
+    --- Admin
     | Admin_RemoteUrlChanged String
     | GoogleSigninRequested
     | Auth0SigninRequested
     | Logout
+    --- Fusion
+    | Admin_FusionPatch Fusion.Patch.Patch
+    | Admin_FusionQuery Fusion.Query
 
 
 type ToBackend
@@ -87,6 +93,9 @@ type ToBackend
     | AuthToBackend Auth.Common.ToBackend
     | GetUserToBackend
     | LoggedOut
+    --- Fusion
+    | Fusion_PersistPatch Fusion.Patch.Patch
+    | Fusion_Query Fusion.Query
 
 
 type BackendMsg
@@ -107,6 +116,7 @@ type ToFrontend
     | UserInfoMsg (Maybe Auth.Common.UserInfo)
     | UserDataToFrontend UserFrontend
     | PermissionDenied ToBackend
+    | Admin_FusionResponse Fusion.Value
 
 
 type alias Email =

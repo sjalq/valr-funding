@@ -6,7 +6,9 @@ import Html.Attributes as Attr
 import Html.Events exposing (onClick)
 import Lamdera
 import Types exposing (..)
-
+import Fusion.Editor
+import Fusion.Generated.TypeDict
+import Fusion.Generated.TypeDict.Types
 
 init : FrontendModel -> AdminRoute -> ( FrontendModel, Cmd FrontendMsg )
 init model adminRoute =
@@ -98,8 +100,7 @@ viewTabs model =
         [ viewTab AdminDefault model "Default"
         , viewTab AdminLogs model "Logs"
         , viewTab AdminFetchModel model "Fetch Model"
-
-        --, viewTab AdminFusion model "Fusion"
+        , viewTab AdminFusion model "Fusion"
         ]
 
 
@@ -207,10 +208,16 @@ viewFetchModelTab model =
 
 
 viewFusionTab : FrontendModel -> Html FrontendMsg
-viewFusionTab _ =
-    div [ Attr.class "p-4 bg-white rounded-lg shadow" ]
-        [ h2 [ Attr.class "text-xl font-bold mb-4" ] [ text "Fusion" ]
-        , div [] [ text "Fusion content goes here" ]
+viewFusionTab model =
+    div [ Attr.class "p-4 bg-black text-white" ]
+        [ h2 [ Attr.class "text-xl font-bold mb-4" ] [ text "Fusion Editor" ]
+        , Fusion.Editor.value
+            { typeDict = Fusion.Generated.TypeDict.typeDict
+            , type_ = Just Fusion.Generated.TypeDict.Types.type_BackendModel
+            , editMsg = Admin_FusionPatch
+            , queryMsg = Admin_FusionQuery
+            }
+            model.fusionState
         ]
 
 

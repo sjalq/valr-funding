@@ -32,6 +32,11 @@ actionRoleMap msg =
         LoggedOut ->
             Anonymous
 
+        Fusion_PersistPatch _ ->
+            SysAdmin
+
+        Fusion_Query _ ->
+            SysAdmin
 
 {-| Checks if a user has permission to perform a specific backend action
 -}

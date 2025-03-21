@@ -2,6 +2,8 @@ module Backend exposing (..)
 
 import Auth.Flow
 import Dict exposing (Dict)
+import Fusion.Generated.Types
+import Fusion.Patch
 import Lamdera
 import RPC
 import Rights.Auth0 exposing (backendConfig)
@@ -60,7 +62,7 @@ update msg model =
 
         AuthBackendMsg authMsg ->
             Auth.Flow.backendUpdate (backendConfig model) authMsg
-            
+
         GotCryptoPriceResult token result ->
             case result of
                 Ok priceStr ->
@@ -70,7 +72,7 @@ update msg model =
                     in
                     ( { model | pollingJobs = updatedPollingJobs }, Cmd.none )
                         |> log ("Crypto price calculated: " ++ priceStr)
-                        
+
                 Err err ->
                     let
                         updatedPollingJobs =
@@ -78,7 +80,7 @@ update msg model =
                     in
                     ( { model | pollingJobs = updatedPollingJobs }, Cmd.none )
                         |> log ("Failed to calculate crypto price: " ++ httpErrorToString err)
-                        
+
         GotJobTime token timestamp ->
             let
                 updatedPollingJobs =
@@ -141,6 +143,33 @@ updateFromFrontend browserCookie connectionId msg model =
         LoggedOut ->
             ( { model | sessions = Dict.remove browserCookie model.sessions }, Cmd.none )
 
+        Fusion_PersistPatch patch ->
+            let
+                value =
+                    Fusion.Patch.patch { force = False } patch (Fusion.Generated.Types.toValue_BackendModel model)
+                        |> Result.withDefault (Fusion.Generated.Types.toValue_BackendModel model)
+            in
+            case
+                Fusion.Generated.Types.build_BackendModel value
+            of
+                Ok newModel ->
+                    ( newModel
+                      -- , Lamdera.sendToFrontend connectionId (Admin_FusionResponse value)
+                    , Cmd.none
+                    )
+
+                Err err ->
+                    ( model
+                    , Cmd.none
+                    )
+                        |> log ("Failed to apply fusion patch: " ++ Debug.toString err)
+
+        Fusion_Query query ->
+            ( model
+            , Lamdera.sendToFrontend connectionId (Admin_FusionResponse (Fusion.Generated.Types.toValue_BackendModel model))
+            )
+
+
 
 updateFromFrontendCheckingRights : BrowserCookie -> ConnectionId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
 updateFromFrontendCheckingRights browserCookie connectionId msg model =
@@ -149,10 +178,10 @@ updateFromFrontendCheckingRights browserCookie connectionId msg model =
         case msg of
             NoOpToBackend ->
                 True
-                
+
             LoggedOut ->
                 True
-                
+
             AuthToBackend _ ->
                 True
 
@@ -164,6 +193,7 @@ updateFromFrontendCheckingRights browserCookie connectionId msg model =
     then
         -- User has permission, process the message
         updateFromFrontend browserCookie connectionId msg model
+
     else
         -- User doesn't have permission, send PermissionDenied message
         ( model, Lamdera.sendToFrontend connectionId (PermissionDenied msg) )
