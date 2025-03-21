@@ -1,4 +1,4 @@
-module Rights.Auth0 exposing (backendConfig, config, handleAuthSuccess, logout, renewSession)
+module Rights.Auth0 exposing (..)
 
 import Auth.Common
 import Auth.Flow
@@ -15,7 +15,15 @@ renewSession _ _ model =
     ( model, Cmd.none )
 
 
-handleAuthSuccess : BackendModel -> Lamdera.SessionId -> Lamdera.ClientId -> Auth.Common.UserInfo -> Auth.Common.MethodId -> Maybe Auth.Common.Token -> Time.Posix -> ( BackendModel, Cmd BackendMsg )
+handleAuthSuccess :
+    BackendModel
+    -> Lamdera.SessionId
+    -> Lamdera.ClientId
+    -> Auth.Common.UserInfo
+    -> Auth.Common.MethodId
+    -> Maybe Auth.Common.Token
+    -> Time.Posix
+    -> ( BackendModel, Cmd BackendMsg )
 handleAuthSuccess backendModel sessionId clientId userInfo _ _ _ =
     let
         sessionsWithOutThisOne : Dict Lamdera.SessionId Auth.Common.UserInfo
@@ -69,16 +77,18 @@ customizeAuth0Method method =
     case method of
         Auth.Common.ProtocolOAuth oauthConfig ->
             let
-                authEndpoint = oauthConfig.authorizationEndpoint
-                updatedEndpoint = 
-                    { authEndpoint 
-                    | query = Just "connection=google-oauth2&prompt=select_account&auth0Client=eyJuYW1lIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjAuMCJ9" 
+                authEndpoint =
+                    oauthConfig.authorizationEndpoint
+
+                updatedEndpoint =
+                    { authEndpoint
+                        | query = Just "connection=google-oauth2&prompt=select_account&auth0Client=eyJuYW1lIjoiR2VuZXJhbCIsInZlcnNpb24iOiIxLjAuMCJ9"
                     }
             in
             Auth.Common.ProtocolOAuth
-                { oauthConfig 
-                | authorizationEndpoint = updatedEndpoint
+                { oauthConfig
+                    | authorizationEndpoint = updatedEndpoint
                 }
-        
+
         _ ->
-            method 
+            method
