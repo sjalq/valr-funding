@@ -1,3 +1,6 @@
 [submodule "auth"]
 	path = auth
 	url = https://github.com/lamdera/auth.git
+[submodule "fusion"]
+	path = fusion
+	url = https://github.com/lamdera/fusion.git
