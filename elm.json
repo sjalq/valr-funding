@@ -2,7 +2,8 @@
     "type": "application",
     "source-directories": [
         "src",
-        "auth/src"
+        "auth/src",
+        "fusion/src"
     ],
     "elm-version": "0.19.1",
     "dependencies": {
