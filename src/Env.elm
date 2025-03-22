@@ -50,7 +50,7 @@ sysAdminEmail =
 
 openAiApiKey : String
 openAiApiKey =
-    "sk-your-openai-key-here"
+    ""
 
 
 type Mode

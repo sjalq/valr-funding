@@ -106,6 +106,7 @@ type BackendMsg
     | GotJobTime PollingToken Int
       -- example to show polling mechanism
     | GotCryptoPriceResult PollingToken (Result Http.Error String)
+    | StoreTaskResult PollingToken (Result String String)
 
 
 type ToFrontend

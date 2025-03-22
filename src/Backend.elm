@@ -88,6 +88,22 @@ update msg model =
                     ( { model | pollingJobs = updatedPollingJobs }, Cmd.none )
                         |> log ("Failed to calculate crypto price: " ++ httpErrorToString err)
 
+        StoreTaskResult token result ->
+            let
+                updatedPollingJobs =
+                    Dict.insert token (Ready result) model.pollingJobs
+                
+                logMsg =
+                    case result of
+                        Ok data ->
+                            "Task completed successfully: " ++ token
+                        
+                        Err err ->
+                            "Task failed: " ++ token ++ " - " ++ err
+            in
+            ( { model | pollingJobs = updatedPollingJobs }, Cmd.none )
+                |> log logMsg
+
         GotJobTime token timestamp ->
             let
                 updatedPollingJobs =
