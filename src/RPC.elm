@@ -1,6 +1,6 @@
 module RPC exposing (..)
 
-import Crypto.Price
+import EndpointExample.Price
 import Dict
 import Env
 import Http
@@ -34,10 +34,10 @@ lamdera_handleEndpoints rawReq args model =
                 -- only provide the result after the asyncrounous calls to external 
                 -- services have been completed. 
                 "getPrice" ->
-                    LamderaRPC.handleEndpointJson Crypto.Price.getPrice args model
+                    LamderaRPC.handleEndpointJson EndpointExample.Price.getPrice args model
                 
                 "getPriceResult" ->
-                    LamderaRPC.handleEndpointJson Crypto.Price.getPriceResult args model
+                    LamderaRPC.handleEndpointJson EndpointExample.Price.getPriceResult args model
 
                 _ ->
                     let

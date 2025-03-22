@@ -1,4 +1,4 @@
-module Crypto.Price exposing (getPrice, getPriceResult)
+module EndpointExample.Price exposing (getPrice, getPriceResult)
 
 import Dict
 import Env
@@ -55,7 +55,7 @@ handleTimeResult token result =
             NoOpBackendMsg
 
 
--- Fetches ETH price and ZAR rate in a single task chain with logging
+-- Fetches ETH price and ZAR rate in a single task chain with logging, and gets an ETH joke from OpenAI
 fetchEthPriceInZar : Task Http.Error String
 fetchEthPriceInZar =
     let
@@ -85,11 +85,30 @@ fetchEthPriceInZar =
         |> Task.andThen
             (\{ ethPrice, zarRate } ->
                 let
-                    result = ethPrice * zarRate
+                    finalPrice = ethPrice * zarRate
                 in
-                logStep ("ZAR rate fetched: " ++ String.fromFloat zarRate ++ ", final price: " ++ String.fromFloat result ++ " ZAR")
-                    (Task.succeed (String.fromFloat result))
+                logStep ("ZAR rate fetched: " ++ String.fromFloat zarRate ++ ", final price: " ++ String.fromFloat finalPrice ++ " ZAR")
+                    (Task.succeed { price = finalPrice, ethPrice = ethPrice, zarRate = zarRate })
             )
+        |> Task.andThen
+            (\priceData ->
+                logStep "Fetching joke about ETH price from OpenAI"
+                    (fetchJokeAboutEthPrice priceData.price
+                        |> Task.map (\joke -> { price = priceData.price, joke = joke })
+                    )
+            )
+        |> Task.andThen
+            (\result ->
+                logStep ("Got joke: " ++ result.joke)
+                    (Task.succeed result)
+            )
+        |> Task.map (\result -> 
+                Encode.object
+                    [ ( "price", Encode.float result.price )
+                    , ( "joke", Encode.string result.joke )
+                    ]
+                    |> Encode.encode 0
+           )
 
 
 -- Fetches ETH price from Coingecko API
@@ -128,6 +147,71 @@ fetchZarRate =
         }
 
 
+-- Fetches a joke about ETH price in ZAR from OpenAI
+fetchJokeAboutEthPrice : Float -> Task Http.Error String
+fetchJokeAboutEthPrice price =
+    let
+        prompt = "Tell me a short, funny joke about the price of Ethereum being " ++ String.fromFloat price ++ " South African Rand (ZAR). Make it ONE short sentence only."
+        
+        requestBody =
+            Encode.object
+                [ ( "model", Encode.string "gpt-3.5-turbo" )
+                , ( "messages"
+                  , Encode.list 
+                        (\msg -> Encode.object msg)
+                        [ [ ( "role", Encode.string "system" )
+                          , ( "content", Encode.string "You are a helpful assistant that creates short, funny jokes." )
+                          ]
+                        , [ ( "role", Encode.string "user" )
+                          , ( "content", Encode.string prompt )
+                          ]
+                        ]
+                  )
+                , ( "max_tokens", Encode.int 100 )
+                , ( "temperature", Encode.float 0.7 )
+                ]
+    in
+    if String.isEmpty Env.openAiApiKey then
+        Task.succeed "Ethereum price is so high in Rands, even my wallet is crying in two languages!"
+    else
+        Http.task
+            { method = "POST"
+            , headers = [ Http.header "Authorization" ("Bearer " ++ Env.openAiApiKey) 
+                        , Http.header "Content-Type" "application/json" ]
+            , url = addProxy "https://api.openai.com/v1/chat/completions"
+            , body = Http.jsonBody requestBody
+            , resolver = Http.stringResolver <| handleHttpResponse openAiResponseDecoder
+            , timeout = Just 15000
+            }
+
+
+-- Decoder for OpenAI's response
+openAiResponseDecoder : String -> Result Http.Error String
+openAiResponseDecoder responseBody =
+    let
+        decoder =
+            Decode.field "choices"
+                (Decode.index 0
+                    (Decode.field "message"
+                        (Decode.field "content" Decode.string)
+                    )
+                )
+    in
+    case Decode.decodeString decoder responseBody of
+        Ok content ->
+            Ok (String.trim content)
+            
+        Err err ->
+            Err (Http.BadBody (Decode.errorToString err))
+
+
+-- Type alias for price with joke
+type alias PriceWithJoke =
+    { price : Float
+    , joke : String
+    }
+
+
 -- Polls for crypto price status
 getPriceResult : SessionId -> BackendModel -> Headers -> Encode.Value -> ( Result Http.Error Encode.Value, BackendModel, Cmd BackendMsg )
 getPriceResult _ model _ json =
@@ -144,7 +228,27 @@ getPriceResult _ model _ json =
                           ]), model, Cmd.none )
 
                 Just (Ready (Ok data)) ->
-                    ( Ok (Encode.object [ ( "status", Encode.string "ready" ), ( "data", Encode.string data ) ]), model, Cmd.none )
+                    case Decode.decodeString
+                            (Decode.map2 
+                                (\price joke -> 
+                                    { price = price, joke = joke }
+                                )
+                                (Decode.field "price" Decode.float)
+                                (Decode.field "joke" Decode.string)
+                            )
+                            data of
+                        Ok result ->
+                            ( Ok (Encode.object 
+                                [ ( "status", Encode.string "ready" )
+                                , ( "price", Encode.float result.price )
+                                , ( "joke", Encode.string result.joke )
+                                ]), 
+                              model, 
+                              Cmd.none )
+                            
+                        Err _ ->
+                            -- Fallback to original format if parsing fails
+                            ( Ok (Encode.object [ ( "status", Encode.string "ready" ), ( "data", Encode.string data ) ]), model, Cmd.none )
 
                 Just (Ready (Err err)) ->
                     ( Ok (Encode.object [ ( "status", Encode.string "error" ), ( "data", Encode.string err ) ]), model, Cmd.none )
