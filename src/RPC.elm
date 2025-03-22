@@ -6,7 +6,6 @@ import Env
 import Http
 import Json.Encode as Encode
 import Lamdera exposing (SessionId)
-import Lamdera.Wire3
 import LamderaRPC exposing (..)
 import Supplemental exposing (..)
 import SupplementalRPC exposing (..)
@@ -30,7 +29,10 @@ lamdera_handleEndpoints rawReq args model =
                 "getLogs" ->
                     LamderaRPC.handleEndpointJson getLogs args model
                     
-                -- Crypto Price Endpoints
+                -- Example of long running process : Crypto Price Endpoints
+                -- Necessary since Lamdera needs to respond immediately and can
+                -- only provide the result after the asyncrounous calls to external 
+                -- services have been completed. 
                 "getPrice" ->
                     LamderaRPC.handleEndpointJson Crypto.Price.getPrice args model
                 
@@ -44,18 +46,13 @@ lamdera_handleEndpoints rawReq args model =
                     in
                     ( rpcFailure, model, performNow (Log (encodeRPCCallAndResult args rpcFailure)) )
     in
+    -- do not waste log space with logging the logs or the model requests
     case args.endpoint of
         "getModel" ->
             ( result, newModel, cmds )
 
         "getLogs" ->
             ( result, newModel, cmds )
-            
-        "getPrice" ->
-            ( result, newModel, cmds ) |> rpcLog (encodeRPCCallAndResult args result)
-            
-        "getPriceResult" ->
-            ( result, newModel, cmds ) |> rpcLog (encodeRPCCallAndResult args result)
 
         _ ->
             ( result, newModel, cmds ) |> rpcLog (encodeRPCCallAndResult args result)

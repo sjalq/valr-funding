@@ -103,8 +103,9 @@ type BackendMsg
     | Log String
     | GotRemoteModel (Result Http.Error BackendModel)
     | AuthBackendMsg Auth.Common.BackendMsg
-    | GotCryptoPriceResult PollingToken (Result Http.Error String)
     | GotJobTime PollingToken Int
+      -- example to show polling mechanism
+    | GotCryptoPriceResult PollingToken (Result Http.Error String)
 
 
 type ToFrontend
@@ -152,6 +153,7 @@ type Role
     | Anonymous
 
 
+
 -- Polling types
 
 
@@ -161,7 +163,7 @@ type alias PollingToken =
 
 type PollingStatus a
     = Busy
-    | BusyWithTime Int 
+    | BusyWithTime Int
     | Ready (Result String a)
 
 

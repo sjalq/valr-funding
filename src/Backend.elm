@@ -1,7 +1,7 @@
 module Backend exposing (..)
 
 import Auth.Flow
-import Dict exposing (Dict)
+import Dict
 import Fusion.Generated.Types
 import Fusion.Patch
 import Lamdera
@@ -24,8 +24,15 @@ app =
         { init = init
         , update = update
         , updateFromFrontend = updateFromFrontendCheckingRights
-        , subscriptions = \m -> Sub.none
+        , subscriptions = subscriptions
         }
+
+
+subscriptions : Model -> Sub msg
+subscriptions _ =
+    Sub.batch
+        [-- things that run on timers and things that listen to the outside world
+        ]
 
 
 init : ( Model, Cmd BackendMsg )
@@ -168,7 +175,6 @@ updateFromFrontend browserCookie connectionId msg model =
             ( model
             , Lamdera.sendToFrontend connectionId (Admin_FusionResponse (Fusion.Generated.Types.toValue_BackendModel model))
             )
-
 
 
 updateFromFrontendCheckingRights : BrowserCookie -> ConnectionId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
