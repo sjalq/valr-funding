@@ -1,7 +1,7 @@
 module Backend exposing (..)
 
 import Auth.Flow
-import Dict exposing (Dict)
+import Dict 
 import Lamdera
 import RPC
 import Rights.Auth0 exposing (backendConfig)
@@ -22,8 +22,15 @@ app =
         { init = init
         , update = update
         , updateFromFrontend = updateFromFrontendCheckingRights
-        , subscriptions = \m -> Sub.none
+        , subscriptions = subscriptions
         }
+
+
+subscriptions : Model -> Sub msg
+subscriptions _ = 
+    Sub.batch [
+        -- things that run on timers and things that listen to the outside world
+    ]
 
 
 init : ( Model, Cmd BackendMsg )

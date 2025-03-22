@@ -101,6 +101,30 @@ httpErrorToString error =
             "Bad body: " ++ message
 
 
+handleJsonResponse : Decode.Decoder a -> Http.Response String -> Result Http.Error a
+handleJsonResponse decoder response =
+    case response of
+        Http.BadUrl_ url ->
+            Err (Http.BadUrl url)
+
+        Http.Timeout_ ->
+            Err Http.Timeout
+
+        Http.NetworkError_ ->
+            Err Http.NetworkError
+
+        Http.BadStatus_ metadata _ ->
+            Err (Http.BadStatus metadata.statusCode)
+
+        Http.GoodStatus_ _ body ->
+            case Decode.decodeString decoder body of
+                Ok value ->
+                    Ok value
+
+                Err err ->
+                    Err (Http.BadBody (Decode.errorToString err))
+
+
 
 {-
    Logging
